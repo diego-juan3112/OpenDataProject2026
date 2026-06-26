@@ -1,0 +1,41 @@
+# --- Datos (no versionar datasets crudos/pesados) ---
+data/raw/*
+data/interim/*
+data/processed/*
+!data/**/.gitkeep
+*.csv
+*.xlsx
+*.parquet
+*.geojson
+*.shp
+*.dbf
+*.shx
+
+# --- Modelos serializados ---
+*.joblib
+*.pkl
+models/**/*.joblib
+models/**/*.pkl
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+
+# --- App / BD local ---
+app/backend/*.db
+app/backend/.env
+*.sqlite
+*.sqlite3
+
+# --- IDE / SO ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.dist/
