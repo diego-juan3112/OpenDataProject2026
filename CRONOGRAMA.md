@@ -1,23 +1,26 @@
-# CRONOGRAMA — Alerta Ciudadana (2.5 semanas)
+# CRONOGRAMA — Alerta Ciudadana (3 semanas)
 
-Plan semanal con ejecución en paralelo por integrante y **puntos de sincronización
-obligatoria** del equipo completo. Los `#N` refieren a issues de [`BACKLOG.md`](./BACKLOG.md).
+Plan de 3 semanas con ejecución en paralelo por integrante y **puntos de
+sincronización obligatoria** del equipo completo. Los `#N` refieren a issues de
+[`BACKLOG.md`](./BACKLOG.md). "Día 1" es el inicio acordado del sprint.
 
-> **Premisa crítica:** el cuello de botella es el **dataset unificado (#9)**.
-> Hasta que exista, Integrantes 2, 3 y 4 trabajan con datos crudos / mocks. El
-> éxito del cronograma depende de cumplir el sync point de fin de Semana 1.
+> **Premisa crítica 1 — Datos manda:** el cuello de botella es el **dataset
+> unificado (#9)**. Hasta que exista, Integrantes 2, 3 y 4 trabajan con datos crudos
+> o mocks. El cronograma depende de cumplir SYNC-1 al final de la Semana 1.
+
+> **Premisa crítica 2 — La app móvil arranca el Día 1:** el frente móvil es el de
+> mayor riesgo técnico, así que la **decisión de framework (#37) es de los primeros
+> días** y la app se construye contra mocks en paralelo, no se deja para el final.
 
 ---
 
 ## Vista de alto nivel
 
-| | Integrante 1 (Datos) | Integrante 2 (Predictivo) | Integrante 3 (Anomalías) | Integrante 4 (Despliegue) |
+| | Int. 1 (Datos) | Int. 2 (Predictivo + API) | Int. 3 (Clustering + Dashboard) | Int. 4 (App móvil) |
 |---|---|---|---|---|
-| **Semana 1** | #1 #2 #3 #4 #5 #6 #7 #8 **#9** | #12 (EDA crudo) #13 | #22 (EDA crudo) | #32 #33 (scaffold + mock) |
-| **Semana 2** | #10 #11 | #14 #15 #16 #17 #18 #19 | #23 #24 #25 #26 #27 | #34 #35 #36 #37 |
-| **Semana 2.5** | #43 (cierre) | #20 (QA cruz.) #21 #44 | #28 (QA cruz.) #30 #31 #45 / #29* | #38 #39 #40 #41 #42 #46 |
-
-`*#29 (NLP)` = nice-to-have, solo si sobra tiempo.
+| **Semana 1** | #1 #2 #3 #4 #5 #6 #7 #8 **#9** | #13 #14 #15 #16 | #25 #26 #32 | **#37** #38 |
+| **Semana 2** | #10 #11 | #17 #18 #19 #20 #21 | #27 #28 #33 | #39 #40 #41 · **#43 (checkpoint PWA)** |
+| **Semana 3** | #12 (cierre) | #22 #23 #24 | #29 #30 #31 #34 #35 #36 | #42 #44 |
 
 ---
 
@@ -25,65 +28,96 @@ obligatoria** del equipo completo. Los `#N` refieren a issues de [`BACKLOG.md`](
 
 | Sync | Cuándo | Qué debe estar listo | Desbloquea |
 |---|---|---|---|
-| **SYNC-0: Kickoff** | Inicio Semana 1 | Estructura repo + contrato de taxonomía de delitos (Int.1↔2↔3) + unidad espacial (#5) | Que todos arranquen alineados |
-| **SYNC-1: Dataset 🎯** | **Fin Semana 1** | `data/processed/dataset_analitico.parquet` (#9) entregado y documentado | Modelado serio de Int.2 (#16,#17) e Int.3 (#23–#25) |
-| **SYNC-2: Contrato API** | Mitad Semana 1 | Contrato input/output de `/predict` y `/anomalias` (#33) acordado con Int.2 e Int.3 | Que #19/#27 entreguen el formato correcto sin retrabajo |
-| **SYNC-3: Modelos `joblib`** | Fin Semana 2 | `model.joblib` predictivo (#19) y anomalías (#27) entregados a Despliegue | Integración real en la app (#38) + QA cruzada (#20,#28) |
-| **SYNC-4: Integración E2E** | Inicio Semana 2.5 | App con modelos reales corriendo end-to-end (#38) | Demo, deploy y cierre (#41,#42,#46) |
-| **SYNC-5: DoD review** | Fin Semana 2.5 | Checklist de `DEFINITION_OF_DONE.md` revisada en equipo | Entrega |
+| **SYNC-0: Kickoff** | Día 1 | Estructura repo · taxonomía de delitos (Int.1↔2↔3) · unidad espacial (#5) · **decisión de framework móvil (#37)** | Que todos arranquen alineados |
+| **SYNC-1: Dataset 🎯** | **Fin Semana 1** | `dataset_analitico.parquet` (#9) + `zonas_bogota.geojson` (#5) | Modelado (#17,#18,#27) + capas reales del dashboard |
+| **SYNC-2: Contrato `/zonas-riesgo`** | Mitad Semana 1 | Esquema del GeoJSON del endpoint (#20) acordado entre Int.2, Int.3 e Int.4 | Que dashboard (#32) y móvil (#38) construyan contra el mismo shape |
+| **SYNC-3: Modelos `joblib`** | Fin Semana 2 | `model.joblib` (#19) + `clusters.joblib` (#27) | API real (#20) → integración en ambos clientes |
+| **🔴 SYNC-4: Checkpoint PWA** | **Fin Semana 2 (a más tardar Día 10)** | App nativa con GPS + notificación local en **dispositivo físico real** (#39, #40) | Decidir seguir nativa o **activar plan B PWA** (#43) con la Semana 3 íntegra para ejecutar |
+| **SYNC-5: Integración E2E** | Inicio Semana 3 | API real consumida por dashboard (#34) y móvil (#42), sin mocks | Demo, informe y cierre (#44) |
+| **SYNC-6: DoD review** | Fin Semana 3 | Checklist de `DEFINITION_OF_DONE.md` revisada en equipo | Entrega |
 
 ---
 
 ## Detalle por semana
 
-### 🗓️ Semana 1 — Datos manda, el resto adelanta en paralelo
+### 🗓️ Semana 1 — Datos manda; modelado, dashboard y app arrancan en paralelo
 
-**Objetivo:** llegar al dataset unificado (#9) sin que nadie quede ocioso.
+**Objetivo:** llegar al dataset unificado (#9) y dejar la app móvil decidida y en pie.
 
-- **Int.1 (Datos):** ruta crítica. #1→#2 (setup) → ingestas #3–#6 en paralelo lógico → limpieza #7 → cruce #8 → **dataset #9**. Es la semana más cargada de Int.1; los demás deben proteger su foco.
-- **Int.2 (Predictivo):** #12 (EDA sobre crudos de #3/#4) + #13 (protocolo de validación anti-fuga, no necesita el dataset final). **No esperar bloqueado.**
-- **Int.3 (Anomalías):** #22 (EDA de series temporales sobre crudos). Forma la definición de "anomalía".
-- **Int.4 (Despliegue):** #32 (scaffold FastAPI + mapa vacío) + #33 (contrato API + mock). Construye casi toda la app contra el mock sin depender de nadie.
+- **Int. 1 (Datos):** ruta crítica. #1→#2 → ingestas #3–#6 → limpieza #7 → cruce #8 → **dataset #9** (+ `zonas_bogota.geojson` en #5).
+- **Int. 2 (Predictivo + API):** #13 (EDA crudos) + #14 (protocolo anti-fuga) + #15 (baseline) + #16 (feature engineering). No espera bloqueado.
+- **Int. 3 (Clustering + Dashboard):** #25 (EDA de perfiles) + #26 (features de perfil) + #32 (scaffold del dashboard contra mock). Construye el dashboard sin depender de nadie.
+- **Int. 4 (App móvil):** **#37 (decisión de framework, primeros días)** + #38 (pantalla principal contra mock de `/zonas-riesgo`). La app existe y corre en Expo Go desde la Semana 1.
 
-> ⚠️ Si #9 se retrasa, **todo el cronograma se corre**. Si al día 4 de Semana 1 el
-> cruce (#8) está en riesgo, recortar: menos fuentes de contexto DANE (#6 es la
-> más prescindible) antes que sacrificar SIEDCO/NUSE.
+> ⚠️ Si #9 se retrasa, todo se corre. Si al Día 4 el cruce (#8) está en riesgo,
+> recortar primero las features de contexto DANE (#6 es lo más prescindible) antes
+> que sacrificar SIEDCO o NUSE.
 
-### 🗓️ Semana 2 — Modelado en serio + app contra mock
+### 🗓️ Semana 2 — Modelos entrenados, API arriba, GPS y notificación en el móvil
 
-**Objetivo:** modelos entrenados y serializados; app funcional contra el mock.
+**Objetivo:** ambos modelos serializados, la API real respondiendo, y la app móvil
+disparando la notificación local en un dispositivo físico.
 
-- **Int.1:** #10 (target + desbalance, con Int.2) y #11 (EDA de calidad + nota de sesgo). Pasa a rol de soporte/QA de datos.
-- **Int.2:** #14→#15→#16→#17→#18→**#19**. Cierra modelo final y lo serializa.
-- **Int.3:** #23→#24/#25→#26→**#27**. Cierra detector y lo serializa.
-- **Int.4:** #34 (/predict) #35 (reportes+BD) #36 (mapa calor) #37 (formulario). App completa contra mock.
+- **Int. 1:** #10 (target + desbalance, con Int. 2) y #11 (EDA de calidad + nota de sesgo). Pasa a soporte/QA de datos.
+- **Int. 2:** #17→#18→#19 (modelo final + `model.joblib`) → **#20 (API `/zonas-riesgo`)** → #21 (capa de datos/geofencing del móvil, con Int. 4).
+- **Int. 3:** #27 (K-Means + tipología + `clusters.joblib`) → #28 (validación interna) → #33 (capas del mapa contra mock/real).
+- **Int. 4:** #39 (GPS + permisos + privacidad) → #40 (notificación local al entrar a zona alta) → #41 (modo demo). **Cierra la Semana 2 con el checkpoint #43.**
 
-> Fin de Semana 2 = **SYNC-3**: ambos `.joblib` entregados a Despliegue.
+> Fin de Semana 2 = **SYNC-3** (`.joblib` listos) y **🔴 SYNC-4** (checkpoint PWA).
 
-### 🗓️ Semana 2.5 — Integración, QA cruzada, cierre y entrega
+### 🗓️ Semana 3 — Integración real, QA cruzada, ética, demo y cierre
 
-**Objetivo:** todo integrado, evaluado y empaquetado.
+**Objetivo:** todo integrado contra la API real (sin mocks), evaluado, y empaquetado
+con foco en el informe y la demo.
 
-- **Int.4:** #38 (integrar modelos reales) → #39 (monitoring) #40 (usabilidad+privacidad) #41 (deploy) #42 (README) → #46 (demo/pitch/video).
-- **Int.2:** #20 (QA cruzada del modelo de anomalías) + #21 (model card) + #44 (informe).
-- **Int.3:** #28 (QA cruzada del modelo predictivo) + #30 #31 + #45 (informe+ética). #29 (NLP) **solo si sobra tiempo.**
-- **Int.1:** #43 (sección de datos + diccionario consolidado).
+- **Int. 1:** #12 (sección de datos + diccionario consolidado).
+- **Int. 2:** #22 (análisis de error/robustez) + #23 (QA cruzada del clustering) + #24 (sección predictivo + evaluación compartida).
+- **Int. 3:** #29 (flag z-score) + #30 (QA cruzada del predictivo) + #31 (auditoría de sesgo) + #34 (API real en dashboard) + #35 (sección clustering + ética) + #36 (reporte simulado + flag, con Int. 4).
+- **Int. 4:** #42 (API real en la app + build instalable en dispositivo físico) + **#44** (monitoring + demo + pitch + video + consolidación del informe).
 
-> Fin = **SYNC-5**: revisión conjunta de la Definition of Done.
+> Fin = **SYNC-6**: revisión conjunta de la Definition of Done.
 
 ---
 
-## Plan de contingencia (si vamos retrasados)
+## 🔴 Decisión de contingencia: PWA (fecha límite dura)
 
-Recortar en este orden, **sin tocar el núcleo demostrable** (mapa de riesgo +
-reporte ciudadano + 1 detector de anomalías):
+El **checkpoint #43 (SYNC-4) se evalúa a más tardar el Día 10 (fin de Semana 2)**.
+Regla de decisión:
 
-1. **#29 NLP** — eliminar (ya es nice-to-have).
-2. **#41 hosting público** — quedarse con demo local.
-3. **#6/#15 features de contexto DANE** — usar solo features temporales/espaciales.
-4. **#25 Isolation Forest** — quedarse solo con z-score (#24), más simple y rápido.
-5. **#17 XGBoost** — quedarse con Random Forest (#16) si el tuning no rinde.
+- **Si** al fin de Semana 2 la app nativa tiene **GPS + notificación local
+  funcionando en un dispositivo físico real** → se continúa con la app nativa.
+- **Si no** → se **activa el plan B: PWA instalable** (GPS + Notification API del
+  navegador, "Agregar a pantalla de inicio"), que consume **el mismo
+  `/zonas-riesgo`**. El contrato de datos no cambia; solo cambia el cliente.
 
-Lo que **NO se recorta**: dataset unificado (#9), un modelo predictivo funcional,
-un detector de anomalías, la app con mapa + formulario, la QA cruzada (#20/#28) y
-la discusión ética (#45). Esos cinco son lo que sostiene la evaluación.
+Tomar la decisión ese día deja la **Semana 3 completa** para ejecutar el cliente que
+gane, sin comprometer el tiempo de demo. Decidirlo más tarde sí lo comprometería.
+
+---
+
+## ⚠️ Riesgo abierto: NLP / convocatoria
+
+Si se confirmara que el texto oficial exige **NLP / sistemas de recomendación como
+mínimo** (no como sugerencia), el NLP de reportes pasa de nice-to-have a obligatorio
+y se recorta otro frente para liberarlo (p. ej. la tipología del dashboard como tabla
+estática en vez de capa interactiva). Confirmar contra el texto oficial **antes de la
+Semana 2**, cuando aún hay margen.
+
+---
+
+## Plan de contingencia general (si vamos retrasados)
+
+Recortar en este orden, **sin tocar el núcleo demostrable** (API `/zonas-riesgo` +
+mapa de riesgo + tipología de zonas + un cliente con alerta + reporte simulado):
+
+1. **NLP / GenAI** — ya es nice-to-have, se elimina primero.
+2. **Cliente móvil nativo → PWA** (vía #43) si el GPS/notificación no cuaja a tiempo.
+3. **Features de contexto DANE (#6/#16)** — usar solo features temporales/espaciales.
+4. **Capa de tipología interactiva (#33)** — mostrarla como tabla/leyenda estática.
+5. **Gradient Boosting (#18)** — quedarse con Random Forest (#17) si el tuning no rinde.
+
+Lo que **NO se recorta:** dataset unificado (#9), un modelo predictivo funcional, el
+clustering K-Means funcional, la API `/zonas-riesgo` consumida por ambos clientes, al
+menos un cliente disparando la alerta geolocalizada, la QA cruzada (#23/#30), la
+auditoría de sesgo (#31) y la discusión ética (#35). Esos sostienen los criterios de
+mayor peso (datos abiertos, IA, impacto, innovación/ética).

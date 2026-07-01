@@ -1,36 +1,51 @@
 # Alerta Ciudadana 🚨
 
-Sistema predictivo de seguridad ciudadana para Colombia, construido con datos
-abiertos oficiales bajo la metodología **CRISP-ML(Q)**. Reto **"Seguridad
-Ciudadana y Justicia"** — Universidad de Caldas.
+Sistema predictivo de seguridad ciudadana para **Bogotá**, construido con datos
+abiertos oficiales de Colombia bajo la metodología **CRISP-ML(Q)**. Reto
+**"Seguridad Ciudadana y Justicia"** — Universidad de Caldas.
 
-> **Contexto completo del proyecto:** ver [`CLAUDE.md`](./CLAUDE.md) (problema de
-> negocio, fuentes de datos, metodología, criterios de evaluación). **Léelo antes
-> de empezar.**
+> **Documento maestro del proyecto:** [`CLAUDE.md`](./CLAUDE.md) (qué es, fuentes,
+> arquitectura, metodología y restricciones). Léelo antes de empezar.
 
 ---
 
 ## ¿Qué es?
 
-Una app web que combina:
+Alerta Ciudadana convierte el histórico oficial de criminalidad en una **alerta
+geolocalizada accionable**. Tiene **dos clientes** que consumen **el mismo modelo
+y los mismos datos** a través de una **API ligera de un solo endpoint**
+(`GET /zonas-riesgo`):
 
-1. **Mapa de riesgo predictivo** — modelo ML que estima la probabilidad de
-   incidentes por zona, franja horaria y tipo de delito, entrenado sobre
-   históricos oficiales (SIEDCO / Policía Nacional).
-2. **Canal de reporte ciudadano** — formulario in-app donde los usuarios reportan
-   incidentes (tipo, ubicación en mapa, hora, descripción) que se cruzan contra
-   el histórico para detectar anomalías.
-3. **Detección de anomalías** — identifica picos atípicos en reportes/series
-   respecto a lo esperado para una zona–franja horaria.
+1. **Dashboard analítico (Streamlit).** Mapa de riesgo por zona, tipología de
+   zonas por perfil delictivo y demo de reporte ciudadano con detección de
+   anomalías por z-score.
+2. **App móvil nativa (Expo / React Native).** Lee el GPS en tiempo real y dispara
+   una **notificación local** cuando el usuario entra a una zona de riesgo alto.
+   Es la pieza central de la propuesta: la alerta en el momento.
 
-### Alcance comprometido (PoC)
+No hay base de datos persistente: el reporte ciudadano vive en sesión. La API es la
+única autoridad de inferencia; ambos clientes son consumidores delgados.
 
-| Decisión | Compromiso para la entrega |
+### El mapa es una composición de capas
+
+El dato abierto de SIEDCO es de **tipo polígono por localidad** (EPSG:4686), no
+coordenada-punto del hecho. Por la naturaleza del dato, el mapa se compone en capas:
+
+| Capa | Fuente | Representación |
+|---|---|---|
+| **Coroplético** (fondo estadístico oficial) | SIEDCO | Polígonos por localidad coloreados por riesgo |
+| **Puntos / densidad** (lo más cercano a "tiempo real") | NUSE / Línea 123 | Puntos donde haya georreferenciación fina |
+| **Reportes ciudadanos** | App (simulado, en sesión) | Puntos individuales sobre las capas anteriores |
+
+### Alcance
+
+| Decisión | Detalle |
 |---|---|
-| **Geografía** | **Bogotá** (única ciudad con datos NUSE/C4 línea 123 — el componente más cercano a "tiempo real") |
-| **Reporte ciudadano** | Form-based MVP (sin push del SO ni feed en vivo) |
-| **IA obligatoria** | Modelo predictivo de riesgo + detección de anomalías |
-| **IA nice-to-have** | NLP de reportes / resumen GenAI (NO bloqueantes) |
+| **Geografía** | Bogotá (única ciudad con datos NUSE/C4 Línea 123) |
+| **Clientes** | Dashboard Streamlit + app móvil Expo, ambos sobre `GET /zonas-riesgo` |
+| **Estado del reporte** | Simulado en sesión (sin BD persistente) |
+| **IA obligatoria** | Predictivo (RF/Gradient Boosting) + clustering de zonas (K-Means) + flag z-score |
+| **IA nice-to-have** | NLP de reportes / resumen GenAI (no bloqueantes) |
 
 ---
 
@@ -38,10 +53,11 @@ Una app web que combina:
 
 | Capa | Tecnología | Por qué |
 |---|---|---|
-| Pipeline de datos | Python · pandas · **GeoPandas** | Cruce SIEDCO ↔ DIVIPOLA por **código DANE** (no por nombre) |
-| Modelado | scikit-learn · XGBoost · joblib | Random Forest/XGBoost (predictivo) + Isolation Forest/z-score (anomalías) |
-| Backend/API | **FastAPI** + SQLite (dev) / PostgreSQL (prod) | Rápido de desarrollar, buena integración con modelos `joblib` |
-| Frontend | **Leaflet.js** + Jinja/estático | Mapa de calor interactivo + formulario de reporte sin SPA pesada |
+| Pipeline de datos | Python · pandas · **GeoPandas** · pyarrow | Cruce SIEDCO ↔ DIVIPOLA por **código DANE** (no por nombre) |
+| Modelado | scikit-learn · XGBoost · joblib | RF/Gradient Boosting (predictivo) + K-Means (tipología de zonas) |
+| API | **FastAPI** + uvicorn | Un endpoint `GET /zonas-riesgo` → GeoJSON con riesgo + cluster, carga `.joblib` en memoria |
+| Dashboard | **Streamlit** + **Folium** (`streamlit-folium`) | Mapa coroplético + puntos + reporte simulado, un solo comando |
+| App móvil | **Expo (React Native)** · `expo-location` · `expo-notifications` | GPS en tiempo real + notificación local; APK con `eas build` |
 
 ---
 
@@ -49,44 +65,89 @@ Una app web que combina:
 
 ```
 OpenDataProject2026/
-├── CLAUDE.md                 # Contexto del proyecto (Fase 1)
+├── CLAUDE.md                 # Documento maestro
 ├── README.md                 # Este archivo
 ├── BACKLOG.md                # Issues por integrante
-├── CRONOGRAMA.md             # Semanas, dependencias y puntos de sincronización
+├── CRONOGRAMA.md             # Semanas, dependencias y sincronizaciones
 ├── DEFINITION_OF_DONE.md     # DoD a nivel proyecto
-├── docs/                     # BU/DU, diccionarios de datos, arquitectura
+├── docs/                     # BU/DU, diccionarios, evaluación, monitoring
 ├── data/                     # raw / interim / processed (gitignored)
 ├── data-engineering/         # Integrante 1 — pipeline + EDA
 ├── models/
-│   ├── predictivo/           # Integrante 2
-│   └── anomalias/            # Integrante 3
-└── app/
-    ├── backend/              # Integrante 4 — FastAPI
-    └── frontend/             # Integrante 4 — Leaflet
+│   ├── predictivo/           # Integrante 2 — RF/Gradient Boosting
+│   └── clustering/           # Integrante 3 — K-Means (tipología de zonas)
+├── api/                      # Integrante 2 — FastAPI: GET /zonas-riesgo
+├── app/                      # Integrante 3 — dashboard Streamlit
+└── mobile/                   # Integrante 4 — app Expo / React Native
 ```
 
 ---
 
-## Cómo correr el proyecto (referencia futura)
+## Cómo correr el proyecto
 
-> Estos comandos se irán completando a medida que cada pista entregue su parte.
+> Los comandos se completan a medida que cada pista entrega su parte. El orden de
+> arranque para una demo completa es: **pipeline → modelos → API → (dashboard | app)**.
+
+### 0) Entorno Python
 
 ```bash
-# 1) Entorno
-python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-
-# 2) Pipeline de datos (Integrante 1) — genera data/processed/dataset_analitico.parquet
-python data-engineering/build_dataset.py
-
-# 3) Entrenar modelos (Integrantes 2 y 3) — genera models/**/*.joblib
-python models/predictivo/train.py
-python models/anomalias/train.py
-
-# 4) Levantar la app (Integrante 4)
-uvicorn app.backend.main:app --reload
-# Frontend disponible en http://localhost:8000
 ```
+
+### 1) Pipeline de datos (Integrante 1)
+
+Genera `data/processed/dataset_analitico.parquet` y `data/processed/zonas_bogota.geojson`.
+
+```bash
+python data-engineering/build_dataset.py
+```
+
+### 2) Entrenar modelos (Integrantes 2 y 3)
+
+Genera `models/predictivo/model.joblib` y `models/clustering/clusters.joblib`.
+
+```bash
+python models/predictivo/train.py
+python models/clustering/train.py
+```
+
+### 3) Levantar la API ligera (Integrante 2)
+
+Carga los modelos en memoria y expone el único endpoint del sistema.
+
+```bash
+uvicorn api.main:app --host 0.0.0.0 --port 8000
+# Contrato:  GET http://localhost:8000/zonas-riesgo  → GeoJSON (riesgo + cluster por zona)
+```
+
+> `--host 0.0.0.0` permite que el dispositivo móvil físico alcance la API por la
+> IP de LAN del portátil (misma Wi-Fi).
+
+### 4a) Dashboard (Integrante 3)
+
+```bash
+streamlit run app/streamlit_app.py
+# Dashboard en http://localhost:8501  (consume la API en el puerto 8000)
+```
+
+### 4b) App móvil en dispositivo físico real (Integrante 4)
+
+```bash
+cd mobile
+npm install
+npx expo start
+```
+
+1. Escanea el QR con **Expo Go** desde un teléfono **Android** en la misma Wi-Fi.
+2. Configura la URL de la API con la **IP de LAN** del portátil (p. ej.
+   `http://192.168.x.x:8000`) o un **túnel** (`npx expo start --tunnel` / ngrok).
+3. Concede el permiso de ubicación (aviso de privacidad opt-in) y activa el
+   **modo demo** para disparar la alerta con una ubicación simulada en la
+   presentación.
+
+Para un APK instalable: `eas build -p android --profile preview`.
 
 ---
 
@@ -94,11 +155,11 @@ uvicorn app.backend.main:app --reload
 
 | # | Pista | Responsabilidad principal |
 |---|---|---|
-| 1 | **Datos** | Fase 2 — ingesta, limpieza, cruce de fuentes, dataset unificado |
-| 2 | **Predictivo** | Fase 3a — modelo de riesgo zona–tiempo–delito |
-| 3 | **Anomalías / NLP** | Fase 3b — detección de anomalías (+ NLP nice-to-have) |
-| 4 | **Despliegue** | Fase 5 — backend/API + frontend con mapa interactivo |
+| 1 | **Datos** | Ingesta, limpieza, cruce por DANE, dataset unificado + GeoJSON de zonas |
+| 2 | **Predictivo + API** | Modelo de riesgo (RF/GB) + API `/zonas-riesgo` + capa de datos del móvil |
+| 3 | **Clustering + Dashboard** | Tipología de zonas (K-Means) + ética/sesgo + dashboard Streamlit |
+| 4 | **App móvil** | Cliente Expo: GPS + notificación local + modo demo + build en dispositivo físico |
 
-La **Fase 4 (QA)** es cruzada: los integrantes 2 y 3 evalúan el modelo del otro.
-Ver [`BACKLOG.md`](./BACKLOG.md) para el detalle de issues y
-[`CRONOGRAMA.md`](./CRONOGRAMA.md) para el plan semanal.
+La **Fase 4 (QA)** es cruzada: cada quien reporta sus métricas y un compañero deja
+un comentario de validación (nadie evalúa su propio modelo). Ver
+[`BACKLOG.md`](./BACKLOG.md) y [`CRONOGRAMA.md`](./CRONOGRAMA.md).

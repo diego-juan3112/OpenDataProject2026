@@ -1,164 +1,127 @@
 # BACKLOG — Alerta Ciudadana
 
-Backlog completo de issues repartido entre los 4 integrantes, calibrado para
-**2.5 semanas** de trabajo en equipo académico (part-time). Cada integrante
-tiene **11–12 issues** con carga comparable.
+Backlog completo de issues repartido entre los **4 integrantes**, calibrado para
+**3 semanas** de trabajo en equipo académico (part-time). La carga objetivo es de
+**~11–13 días-persona** por integrante.
 
 > **Cómo usar este archivo:** cada bloque `###` es un issue listo para copiarse a
 > GitHub Issues (o crearse con `gh issue create`). La numeración `#N` es global y
 > se usa en los campos *Depende de* / *Bloquea a*.
 
----
-
-## ⚠️ Recorte de alcance acordado (leer antes de empezar)
-
-El alcance literal de `CLAUDE.md` ("nacional" + app en tiempo real + NLP + GenAI)
-es de **2–3 meses**, no 2–3 semanas. Para entregar algo demostrable y defendible,
-el equipo acordó estos **recortes explícitos**:
-
-| Aspecto | CLAUDE.md (ideal) | Compromiso para la entrega |
-|---|---|---|
-| Geografía | Nacional, drill-down depto→municipio | **Solo Bogotá** (PoC; única ciudad con NUSE/C4) |
-| Reporte ciudadano | Tiempo real + push notifications | **Form-based MVP** (sin push del SO ni feed en vivo) |
-| IA obligatoria | Predictivo + Anomalías + NLP + GenAI | **Predictivo + Anomalías** |
-| NLP / GenAI | Módulos del sistema | **Nice-to-have NO bloqueantes** |
-
-Estos recortes están marcados en los issues afectados. El alcance nacional, push
-real y NLP/GenAI quedan documentados como **trabajo futuro** en el informe (suma
-puntos en "Impacto y escalabilidad").
-
----
-
 ## Leyenda
 
-- **[DATOS]** Integrante 1 · **[PRED]** Integrante 2 · **[ANOM]** Integrante 3 · **[APP]** Integrante 4
+- **[DATOS]** Integrante 1 · **[PRED]** Integrante 2 · **[CLUST]** Integrante 3 · **[APP]** Integrante 4
 - 🟢 puede empezar día 1 (sin bloqueo) · 🟡 bloqueado por dependencia · 🔵 cierre/entrega
+- 🤝 sync point entre integrantes · 🎯 entregable clave · 🔴 decisión bloqueante
+
+## Reparto de pistas
+
+| Pista | Integrante | Frente |
+|---|---|---|
+| **Datos** | Int. 1 | Pipeline: ingesta → limpieza → cruce DANE → dataset unificado + GeoJSON de zonas |
+| **Predictivo + API** | Int. 2 | Modelo RF/GB · API `/zonas-riesgo` · capa de datos/geofencing del móvil |
+| **Clustering + Dashboard** | Int. 3 | K-Means (tipología) · ética/sesgo · dashboard Streamlit |
+| **App móvil** | Int. 4 | Cliente Expo: GPS · notificación local · modo demo · build en dispositivo físico |
+
+La app móvil es trabajo nuevo y significativo, por eso se reparte entre **dos
+integrantes**: Int. 2 sostiene la **API + la capa de datos/geofencing** que el
+cliente consume, e Int. 4 construye la **UI + GPS + notificaciones + modo demo +
+build en dispositivo**. El dashboard, más liviano porque la inferencia vive en la
+API, lo lleva Int. 3 junto al clustering.
 
 ---
 
-# 🟦 INTEGRANTE 1 — DATOS (Fase 2: Data Engineering)
+# 🟦 INTEGRANTE 1 — DATOS (Fase 1–2)
 
 ### [DATOS] #1 — Validar y cerrar inventario de datasets (Fase 1)
 
-**Asignado a:** Integrante 1 (Datos)
-**Fase CRISP-ML:** 1
-**Estimación:** 0.5 día
-**Depende de:** ninguno 🟢
-**Bloquea a:** #3, #4, #5, #6
+**Asignado a:** Integrante 1 · **Fase:** 1 · **Estimación:** 0.5 día
+**Depende de:** ninguno 🟢 · **Bloquea a:** #3, #4, #5, #6
 
-**Descripción:**
-Verificar en datos.gov.co la disponibilidad, vigencia y formato exacto de cada
-fuente para Bogotá (SIEDCO, NUSE C4, DIVIPOLA, DANE). Confirmar URLs y fecha de
-última actualización. Cerrar la Fase 1 como validación, no como construcción.
+**Descripción:** Verificar en datos.gov.co disponibilidad, vigencia y formato exacto
+de cada fuente para Bogotá (SIEDCO, NUSE C4, DIVIPOLA, DANE). Confirmar URLs y fecha
+de última actualización.
 
 **Criterios de aceptación:**
-- [ ] Tabla en `docs/business-understanding.md` con cada dataset: nombre, entidad, URL, fecha de última actualización, formato, granularidad.
-- [ ] Cada fuente marcada como "disponible y usable" o "descartada" (con razón).
+- [ ] Tabla en `docs/business-understanding.md`: nombre, entidad, URL, fecha, formato, granularidad.
+- [ ] Cada fuente marcada "disponible y usable" o "descartada" (con razón).
+- [ ] Confirmado el tipo de geometría de SIEDCO (polígono por localidad, EPSG:4686) y la granularidad real de NUSE.
 - [ ] Rango temporal real del histórico SIEDCO para Bogotá documentado.
-
-**Notas técnicas:**
-Ver tabla de fuentes en `CLAUDE.md §2`. Si una fuente no existe/no es usable para
-Bogotá, proponer reemplazo y notificar al equipo de inmediato (afecta modelado).
 
 ---
 
 ### [DATOS] #2 — Setup del módulo de datos y estructura `data/`
 
-**Asignado a:** Integrante 1 (Datos)
-**Fase CRISP-ML:** 2
-**Estimación:** 0.5 día
-**Depende de:** ninguno 🟢
-**Bloquea a:** #3, #4, #5, #6
+**Asignado a:** Integrante 1 · **Fase:** 2 · **Estimación:** 0.5 día
+**Depende de:** ninguno 🟢 · **Bloquea a:** #3, #4, #5, #6
 
-**Descripción:**
-Preparar `data-engineering/`: `requirements.txt` del pipeline, estructura de
-scripts, y convención de carpetas `data/raw → interim → processed`. Definir
-formato de intercambio del dataset final (Parquet).
+**Descripción:** Preparar `data-engineering/`: `requirements.txt` del pipeline,
+estructura de scripts y convención `data/raw → interim → processed`. Formato de
+intercambio final: Parquet.
 
 **Criterios de aceptación:**
 - [ ] `data-engineering/requirements.txt` con pandas, geopandas, pyarrow, etc.
-- [ ] README corto en `data-engineering/` explicando el flujo del pipeline.
+- [ ] README corto del flujo del pipeline en `data-engineering/`.
 - [ ] `.gitignore` confirmado: `data/raw|interim|processed` no se versionan.
 
 ---
 
-### [DATOS] #3 — Ingesta SIEDCO (delitos seguridad y convivencia, Bogotá)
+### [DATOS] #3 — Ingesta SIEDCO (delitos de alto impacto, Bogotá)
 
-**Asignado a:** Integrante 1 (Datos)
-**Fase CRISP-ML:** 2
-**Estimación:** 1 día
-**Depende de:** #1, #2
-**Bloquea a:** #7, #8
+**Asignado a:** Integrante 1 · **Fase:** 2 · **Estimación:** 1 día
+**Depende de:** #1, #2 · **Bloquea a:** #7, #8
 
-**Descripción:**
-Descargar y cargar el dataset núcleo (hurtos, homicidios, lesiones, violencia
-intrafamiliar, delitos sexuales, etc.) filtrado a Bogotá. Script reproducible que
-guarda en `data/raw/` y carga a DataFrame.
+**Descripción:** Descargar y cargar el dataset núcleo (hurtos, homicidios, lesiones,
+violencia intrafamiliar, delitos sexuales, etc.) filtrado a Bogotá. Script reproducible.
 
 **Criterios de aceptación:**
-- [ ] Script `data-engineering/ingest_siedco.py` reproducible (descarga o lee de `data/raw/`).
+- [ ] `data-engineering/ingest_siedco.py` reproducible (descarga o lee de `data/raw/`).
 - [ ] Datos filtrados a Bogotá, con conteo de filas y rango de fechas reportados.
-- [ ] Columnas clave identificadas: fecha/hora, tipo de delito, código municipio, modalidad, lugar.
+- [ ] Columnas clave: fecha/hora, tipo de delito, código DANE / localidad, modalidad.
 
-**Notas técnicas:**
-Cruzar por **código DANE de municipio**, nunca por nombre de texto libre (ver `CLAUDE.md §4.2`).
+**Notas técnicas:** Cruzar por **código DANE**, nunca por nombre de texto libre.
 
 ---
 
 ### [DATOS] #4 — Ingesta NUSE C4 Línea 123 (Bogotá)
 
-**Asignado a:** Integrante 1 (Datos)
-**Fase CRISP-ML:** 2
-**Estimación:** 1 día
-**Depende de:** #1, #2
-**Bloquea a:** #7, #8
+**Asignado a:** Integrante 1 · **Fase:** 2 · **Estimación:** 1 día
+**Depende de:** #1, #2 · **Bloquea a:** #7, #8
 
-**Descripción:**
-Cargar incidentes tramitados C4 (línea 123) georreferenciados de Bogotá. Es la
-fuente más cercana a un "feed en tiempo real" y aporta lat/lon a nivel incidente.
+**Descripción:** Cargar incidentes tramitados C4 (Línea 123) de Bogotá. Es la fuente
+con mayor probabilidad de georreferenciación fina y sostiene la capa de puntos.
 
 **Criterios de aceptación:**
-- [ ] Script `data-engineering/ingest_nuse.py` reproducible.
-- [ ] Coordenadas (lat/lon) validadas dentro del bounding box de Bogotá.
-- [ ] Tipos de incidente mapeados/normalizados a categorías comparables con SIEDCO.
+- [ ] `data-engineering/ingest_nuse.py` reproducible.
+- [ ] Verificado si trae lat/lon por incidente; si solo trae localidad, documentarlo (afecta la capa de puntos).
+- [ ] Coordenadas validadas dentro del bounding box de Bogotá; tipos normalizados a categorías comparables con SIEDCO.
 
 ---
 
-### [DATOS] #5 — Ingesta DIVIPOLA + geometrías de Bogotá
+### [DATOS] #5 — Ingesta DIVIPOLA + geometrías de Bogotá → `zonas_bogota.geojson` 🎯
 
-**Asignado a:** Integrante 1 (Datos)
-**Fase CRISP-ML:** 2
-**Estimación:** 1 día
-**Depende de:** #1, #2
-**Bloquea a:** #8
+**Asignado a:** Integrante 1 · **Fase:** 2 · **Estimación:** 1 día
+**Depende de:** #1, #2 · **Bloquea a:** #8, #21, #28, #35
 
-**Descripción:**
-Obtener códigos DIVIPOLA (DANE) y geometrías de Bogotá a nivel localidad (y barrio
-si está disponible) en GeoJSON/Shapefile, para definir las "zonas" del modelo.
+**Descripción:** Obtener códigos DIVIPOLA (DANE) y geometrías de Bogotá a nivel
+localidad en GeoJSON. **Exportar `data/processed/zonas_bogota.geojson`**: es el
+insumo geográfico que consumen la API y el dashboard.
 
 **Criterios de aceptación:**
-- [ ] GeoDataFrame de localidades/UPZ de Bogotá cargado con GeoPandas.
+- [ ] GeoDataFrame de localidades de Bogotá cargado con GeoPandas (EPSG documentado).
 - [ ] Cada zona con su código DANE y geometría válida (sin geometrías nulas/inválidas).
-- [ ] Definida la unidad espacial del proyecto (localidad vs UPZ vs grid) y justificada.
-
-**Notas técnicas:**
-La unidad espacial elegida será la "zona" del dataset zona–tiempo–delito. Decidir
-con Integrantes 2 y 3 (granularidad vs. volumen de datos por celda).
+- [ ] `zonas_bogota.geojson` exportado y entregado al equipo de API/dashboard.
+- [ ] Unidad espacial del proyecto (localidad) definida y justificada con Int. 2 e Int. 3.
 
 ---
 
 ### [DATOS] #6 — Ingesta variables demográficas/socioeconómicas DANE
 
-**Asignado a:** Integrante 1 (Datos)
-**Fase CRISP-ML:** 2
-**Estimación:** 1 día
-**Depende de:** #1, #2
-**Bloquea a:** #9
+**Asignado a:** Integrante 1 · **Fase:** 2 · **Estimación:** 1 día
+**Depende de:** #1, #2 · **Bloquea a:** #9
 
-**Descripción:**
-Cargar variables de contexto por zona (densidad poblacional, NBI/pobreza
-multidimensional) **agregadas y anonimizadas** para enriquecer el modelo. Nunca
-microdatos identificables (ver `CLAUDE.md §2`).
+**Descripción:** Cargar variables de contexto por zona (densidad poblacional,
+NBI/pobreza multidimensional) **agregadas y anonimizadas**. Nunca microdatos.
 
 **Criterios de aceptación:**
 - [ ] Variables de contexto unidas a la unidad espacial por código DANE.
@@ -169,187 +132,143 @@ microdatos identificables (ver `CLAUDE.md §2`).
 
 ### [DATOS] #7 — Limpieza, normalización y diccionario de datos real
 
-**Asignado a:** Integrante 1 (Datos)
-**Fase CRISP-ML:** 2
-**Estimación:** 1.5 días
-**Depende de:** #3, #4
-**Bloquea a:** #8, #9
+**Asignado a:** Integrante 1 · **Fase:** 2 · **Estimación:** 1.5 días
+**Depende de:** #3, #4 · **Bloquea a:** #8, #9
 
-**Descripción:**
-Limpiar cada fuente: tipos de datos, nulos, duplicados, normalización de
-categorías de delito entre SIEDCO y NUSE, parsing de fecha/hora a franjas
-horarias. Documentar el diccionario de datos real por fuente.
+**Descripción:** Limpiar cada fuente: tipos, nulos, duplicados, normalización de
+categorías de delito entre SIEDCO y NUSE, parsing de fecha/hora a franjas horarias.
+Documentar el diccionario de datos real por fuente.
 
 **Criterios de aceptación:**
-- [ ] Reporte de calidad por fuente (% nulos, duplicados, valores fuera de rango).
-- [ ] Categorías de delito unificadas en una taxonomía común documentada.
-- [ ] Franja horaria derivada (ej. madrugada/mañana/tarde/noche) y día de semana.
+- [ ] Reporte de calidad por fuente (% nulos, duplicados, fuera de rango).
+- [ ] Taxonomía común de delitos documentada (la consumen Int. 2 e Int. 3).
+- [ ] Franja horaria y día de semana derivados.
 - [ ] `docs/data-dictionaries/` con un `.md` por fuente (columna, tipo, descripción, dominio).
-
-**Notas técnicas:**
-Esta taxonomía común de delitos la consumen Integrantes 2 y 3. Acordarla con ellos antes de cerrar.
 
 ---
 
 ### [DATOS] #8 — Cruce geográfico de fuentes por código DANE
 
-**Asignado a:** Integrante 1 (Datos)
-**Fase CRISP-ML:** 2
-**Estimación:** 1.5 días
-**Depende de:** #5, #7
-**Bloquea a:** #9
+**Asignado a:** Integrante 1 · **Fase:** 2 · **Estimación:** 1.5 días
+**Depende de:** #5, #7 · **Bloquea a:** #9
 
-**Descripción:**
-Unir SIEDCO, NUSE y contexto DANE a la unidad espacial (spatial join de los
-incidentes georreferenciados de NUSE; join por código para SIEDCO). Garantizar
-que cada incidente quede asignado a una zona.
+**Descripción:** Unir SIEDCO, NUSE y contexto DANE a la unidad espacial (spatial
+join de los incidentes georreferenciados de NUSE; join por código para SIEDCO).
 
 **Criterios de aceptación:**
-- [ ] Spatial join NUSE→zona con GeoPandas; % de incidentes sin zona asignada reportado y <5%.
+- [ ] Spatial join NUSE→zona con GeoPandas; % de incidentes sin zona <5% reportado.
 - [ ] Join SIEDCO→zona por código DANE sin pérdida de filas no justificada.
-- [ ] Tabla de validación: conteos por zona coherentes (sin zonas vacías inesperadas).
-
-**Notas técnicas:**
-Usar el mismo CRS en todas las geometrías antes del join (ej. EPSG:4326 → proyectar a métrico si se calculan áreas).
+- [ ] Mismo CRS en todas las geometrías antes del join.
 
 ---
 
 ### [DATOS] #9 — Construir dataset analítico unificado (zona–tiempo–delito) 🎯
 
-**Asignado a:** Integrante 1 (Datos)
-**Fase CRISP-ML:** 2
-**Estimación:** 2 días
-**Depende de:** #6, #8
-**Bloquea a:** #13, #15, #16, #23, #24, #25 (**ENTREGABLE CLAVE — fin Semana 1**)
+**Asignado a:** Integrante 1 · **Fase:** 2 · **Estimación:** 2 días
+**Depende de:** #6, #8 · **Bloquea a:** #16, #18, #27, #28 — **ENTREGABLE CLAVE, fin Semana 1 (SYNC-1)**
 
-**Descripción:**
-Construir la tabla analítica final: una fila por **(zona × franja temporal × tipo
-de delito)** con conteo de incidentes + variables de contexto. Este es el insumo
-que desbloquea el modelado serio de Integrantes 2 y 3.
+**Descripción:** Tabla analítica final: una fila por **(zona × franja temporal ×
+tipo de delito)** con conteo de incidentes + variables de contexto. Desbloquea el
+modelado de Int. 2 (predictivo) e Int. 3 (clustering).
 
 **Criterios de aceptación:**
 - [ ] `data/processed/dataset_analitico.parquet` generado por `build_dataset.py` reproducible.
 - [ ] Esquema documentado: claves (zona, periodo, tipo_delito), features de contexto, target.
 - [ ] Sin fuga temporal en la construcción (no usar info del futuro en una fila pasada).
-- [ ] Entregado al equipo con un notebook de ejemplo de carga + descripción de columnas.
+- [ ] Notebook de ejemplo de carga + descripción de columnas entregado al equipo.
 
-**Notas técnicas:**
-**Este es el sync point de fin de Semana 1.** Avisar al equipo en cuanto esté listo.
+**Notas técnicas:** Avisar al equipo en cuanto esté listo (SYNC-1).
 
 ---
 
 ### [DATOS] #10 — Definir variable objetivo y manejo de desbalance
 
-**Asignado a:** Integrante 1 (Datos)
-**Fase CRISP-ML:** 2–3
-**Estimación:** 1 día
-**Depende de:** #9
-**Bloquea a:** #14
+**Asignado a:** Integrante 1 (con Int. 2) · **Fase:** 2–3 · **Estimación:** 1 día
+**Depende de:** #9 · **Bloquea a:** #17
 
-**Descripción:**
-Definir cómo se etiqueta "riesgo alto" (umbral de conteo / percentil por zona), y
-caracterizar el desbalance de clases. Proponer estrategia (class_weight, SMOTE) en
-conjunto con Integrante 2.
+**Descripción:** Definir cómo se etiqueta "riesgo alto" (umbral de conteo / percentil
+por zona) y caracterizar el desbalance. Acordar estrategia (class_weight, SMOTE) con
+Int. 2. **El manejo explícito de desbalance no se recorta.**
 
 **Criterios de aceptación:**
-- [ ] Definición de la clase objetivo documentada y justificada (con `CLAUDE.md §4.2`).
+- [ ] Definición de la clase objetivo documentada y justificada.
 - [ ] Distribución de clases reportada (ratio de desbalance).
-- [ ] Recomendación de técnica de balanceo acordada con Integrante 2.
+- [ ] Técnica de balanceo acordada con Integrante 2.
 
 ---
 
-### [DATOS] #11 — EDA de calidad de datos + apoyo QA (Fase 4)
+### [DATOS] #11 — EDA de calidad de datos + nota de sesgo (insumo ético)
 
-**Asignado a:** Integrante 1 (Datos)
-**Fase CRISP-ML:** 4
-**Estimación:** 1 día
-**Depende de:** #9
-**Bloquea a:** ninguno
+**Asignado a:** Integrante 1 · **Fase:** 4 · **Estimación:** 1 día
+**Depende de:** #9 · **Bloquea a:** #32
 
-**Descripción:**
-Notebook de EDA de calidad: distribuciones, mapas de cobertura por zona, posibles
-sesgos de vigilancia (zonas con más registros por más policía, no más delito).
-Insumo para la discusión ética de Fase 4.
+**Descripción:** Notebook de EDA de calidad: distribuciones, cobertura por zona,
+posibles sesgos de vigilancia (zonas con más registros por más policía, no más
+delito real). Insumo para la auditoría de sesgo (#32).
 
 **Criterios de aceptación:**
 - [ ] `data-engineering/notebooks/eda_calidad.ipynb` con visualizaciones clave.
-- [ ] Identificadas al menos 2 limitaciones/sesgos potenciales de los datos.
-- [ ] Nota escrita sobre sesgo de sobre-vigilancia para el informe ético (`CLAUDE.md §4.4`).
+- [ ] Al menos 2 limitaciones/sesgos potenciales identificados.
+- [ ] Nota escrita sobre sesgo de sobre-vigilancia para la auditoría de sesgo.
 
 ---
 
-# 🟩 INTEGRANTE 2 — MODELO PREDICTIVO (Fase 3a)
+### [DATOS] #12 — Sección de datos del informe + diccionario consolidado
 
-### [PRED] #12 — EDA exploratorio sobre datos crudos (en paralelo) 🟢
+**Asignado a:** Integrante 1 · **Fase:** 1–2 (cierre) 🔵 · **Estimación:** 1 día
+**Depende de:** #9, #11 · **Bloquea a:** ninguno
 
-**Asignado a:** Integrante 2 (Predictivo)
-**Fase CRISP-ML:** 3
-**Estimación:** 1 día
-**Depende de:** ninguno (usa salidas crudas de #3/#4 apenas existan)
-**Bloquea a:** ninguno
+**Criterios de aceptación:**
+- [ ] Sección de datos del informe con la lista final de datasets (URLs, fechas).
+- [ ] Diccionario de datos consolidado en `docs/`.
+- [ ] Trazabilidad explícita a "Uso de datos abiertos" y "Rigor técnico".
 
-**Descripción:**
-Mientras el dataset unificado (#9) no esté listo, explorar los datos crudos de
-SIEDCO/NUSE para entender distribuciones de delito por hora/zona y formar
-hipótesis de features. Trabajo adelantado no bloqueante.
+---
+
+# 🟩 INTEGRANTE 2 — PREDICTIVO + API (Fase 3a + 5)
+
+### [PRED] #13 — EDA exploratorio sobre datos crudos (en paralelo) 🟢
+
+**Asignado a:** Integrante 2 · **Fase:** 3 · **Estimación:** 1 día
+**Depende de:** ninguno (usa crudos de #3/#4) · **Bloquea a:** ninguno
 
 **Criterios de aceptación:**
 - [ ] Notebook con distribuciones temporales y espaciales de delitos.
-- [ ] Lista de hipótesis de features candidatas para el modelo.
-- [ ] Hallazgos compartidos con Integrante 1 (pueden afectar el diseño del dataset).
+- [ ] Lista de hipótesis de features candidatas.
+- [ ] Hallazgos compartidos con Integrante 1.
 
 ---
 
-### [PRED] #13 — Protocolo de validación espacio-temporal (anti-fuga) 🟢
+### [PRED] #14 — Protocolo de validación espacio-temporal (anti-fuga) 🟢
 
-**Asignado a:** Integrante 2 (Predictivo)
-**Fase CRISP-ML:** 3
-**Estimación:** 1 día
-**Depende de:** #9 (diseño puede empezar antes)
-**Bloquea a:** #16, #17
+**Asignado a:** Integrante 2 · **Fase:** 3 · **Estimación:** 1 día
+**Depende de:** #9 (diseño puede empezar antes) · **Bloquea a:** #17, #18
 
-**Descripción:**
-Definir el esquema de validación que evita fuga temporal: split temporal
-(train=pasado, test=futuro) y/o validación cruzada por bloques temporales. Nada de
-shuffle aleatorio que mezcle pasado y futuro.
+**Descripción:** Split temporal (train=pasado, test=futuro) y/o CV por bloques
+temporales. Nada de shuffle aleatorio. **La validación sin fuga no se recorta.**
 
 **Criterios de aceptación:**
-- [ ] Documento que describe el split (fechas de corte train/val/test).
+- [ ] Documento con las fechas de corte train/val/test.
 - [ ] Función reutilizable `temporal_split()` implementada y testeada.
-- [ ] Justificación escrita de por qué no se usa K-fold aleatorio (ver `CLAUDE.md §4.3`).
+- [ ] Justificación escrita de por qué no se usa K-fold aleatorio.
 
 ---
 
-### [PRED] #14 — Modelo baseline
+### [PRED] #15 — Modelo baseline
 
-**Asignado a:** Integrante 2 (Predictivo)
-**Fase CRISP-ML:** 3
-**Estimación:** 0.5 día
-**Depende de:** #10, #13
-**Bloquea a:** #16
-
-**Descripción:**
-Implementar baselines (clasificador trivial por mayoría + regla simple "zona
-históricamente peligrosa"). Sirven como piso de comparación para los modelos reales.
+**Asignado a:** Integrante 2 · **Fase:** 3 · **Estimación:** 0.5 día
+**Depende de:** #14 · **Bloquea a:** #17
 
 **Criterios de aceptación:**
-- [ ] Baseline trivial y baseline por regla evaluados con la métrica objetivo (recall/F1 clase riesgo).
-- [ ] Resultados registrados como referencia para comparar RF/XGBoost.
+- [ ] Baseline trivial (mayoría) + baseline por regla ("zona históricamente peligrosa").
+- [ ] Evaluados con la métrica objetivo (recall/F1 clase riesgo); registrados como referencia.
 
 ---
 
-### [PRED] #15 — Feature engineering
+### [PRED] #16 — Feature engineering
 
-**Asignado a:** Integrante 2 (Predictivo)
-**Fase CRISP-ML:** 3
-**Estimación:** 1.5 días
-**Depende de:** #9
-**Bloquea a:** #16, #17
-
-**Descripción:**
-Construir features: temporales (franja, día semana, festivo), espaciales (zona,
-vecindad), de contexto (densidad, NBI) y de rezago histórico (delitos pasados en
-la zona) cuidando no introducir fuga.
+**Asignado a:** Integrante 2 · **Fase:** 3 · **Estimación:** 1.5 días
+**Depende de:** #9 · **Bloquea a:** #17, #18
 
 **Criterios de aceptación:**
 - [ ] Pipeline de features reproducible (`sklearn` Pipeline/ColumnTransformer).
@@ -358,18 +277,10 @@ la zona) cuidando no introducir fuga.
 
 ---
 
-### [PRED] #16 — Entrenar Random Forest
+### [PRED] #17 — Entrenar Random Forest
 
-**Asignado a:** Integrante 2 (Predictivo)
-**Fase CRISP-ML:** 3
-**Estimación:** 1 día
-**Depende de:** #13, #15
-**Bloquea a:** #18
-
-**Descripción:**
-Entrenar Random Forest sobre el dataset con el split temporal y la estrategia de
-balanceo definida. Reportar métricas alineadas al objetivo (recall/F1 de clase
-riesgo, no accuracy global).
+**Asignado a:** Integrante 2 · **Fase:** 3 · **Estimación:** 1 día
+**Depende de:** #10, #14, #15, #16 · **Bloquea a:** #19
 
 **Criterios de aceptación:**
 - [ ] RF entrenado con `class_weight`/SMOTE según #10.
@@ -378,17 +289,10 @@ riesgo, no accuracy global).
 
 ---
 
-### [PRED] #17 — Entrenar XGBoost + comparación
+### [PRED] #18 — Entrenar Gradient Boosting (XGBoost) + comparación
 
-**Asignado a:** Integrante 2 (Predictivo)
-**Fase CRISP-ML:** 3
-**Estimación:** 1 día
-**Depende de:** #13, #15
-**Bloquea a:** #18
-
-**Descripción:**
-Entrenar XGBoost y compararlo con RF y los baselines bajo el mismo protocolo de
-validación. Tabla comparativa de modelos.
+**Asignado a:** Integrante 2 · **Fase:** 3 · **Estimación:** 1 día
+**Depende de:** #14, #16 · **Bloquea a:** #19
 
 **Criterios de aceptación:**
 - [ ] XGBoost entrenado y evaluado con la misma métrica objetivo.
@@ -397,597 +301,429 @@ validación. Tabla comparativa de modelos.
 
 ---
 
-### [PRED] #18 — Tuning + selección del modelo final
+### [PRED] #19 — Tuning + selección del modelo final + `model.joblib`
 
-**Asignado a:** Integrante 2 (Predictivo)
-**Fase CRISP-ML:** 3
-**Estimación:** 1.5 días
-**Depende de:** #16, #17
-**Bloquea a:** #19, #28
+**Asignado a:** Integrante 2 · **Fase:** 3 · **Estimación:** 1.5 días
+**Depende de:** #17, #18 · **Bloquea a:** #21, #23
 
-**Descripción:**
-Ajuste de hiperparámetros del modelo ganador (búsqueda con validación temporal) y
-selección final. Documentar hiperparámetros elegidos.
+**Descripción:** Búsqueda de hiperparámetros con validación temporal, selección del
+modelo final y serialización a `models/predictivo/model.joblib` con su función de
+inferencia `predict.py`.
 
 **Criterios de aceptación:**
-- [ ] Búsqueda de hiperparámetros con validación temporal (no aleatoria).
-- [ ] Hiperparámetros finales documentados.
+- [ ] Búsqueda de hiperparámetros con validación temporal (no aleatoria); hiperparámetros documentados.
 - [ ] Modelo final supera de forma clara los baselines en la métrica objetivo.
+- [ ] `models/predictivo/model.joblib` + `predict.py` con función de inferencia y ejemplo end-to-end.
 
 ---
 
-### [PRED] #19 — Serializar modelo + contrato de inferencia para la app 🤝
+### [PRED] #20 — API ligera `GET /zonas-riesgo` (FastAPI) 🎯🤝
 
-**Asignado a:** Integrante 2 (Predictivo)
-**Fase CRISP-ML:** 3–5
-**Estimación:** 0.5 día
-**Depende de:** #18
-**Bloquea a:** #38 (**sync point: entrega a Despliegue**)
+**Asignado a:** Integrante 2 · **Fase:** 5 · **Estimación:** 1.5 días
+**Depende de:** #5, #19, #27 · **Bloquea a:** #28 (dashboard real), #34 (móvil real)
 
-**Descripción:**
-Exportar el modelo final a `joblib` y definir con Integrante 4 el contrato de
-inferencia: qué entra (zona, periodo, features) y qué sale (probabilidad/nivel de
-riesgo). Función `predict()` envuelta y documentada.
+**Descripción:** Único endpoint del sistema. Carga `model.joblib` y `clusters.joblib`
+en memoria y devuelve un **GeoJSON** de las localidades de Bogotá con: geometría,
+nivel/probabilidad de riesgo (predictivo), cluster + nombre de perfil (clustering) y
+metadatos (código DANE, franja consultada). **Mismo contrato para ambos clientes.**
 
 **Criterios de aceptación:**
-- [ ] `models/predictivo/model.joblib` + `predict.py` con función de inferencia.
-- [ ] Contrato input/output documentado y acordado con Integrante 4 (#33).
-- [ ] Ejemplo de llamada de inferencia funcionando end-to-end (sin la app).
-
-**Notas técnicas:**
-**Sync point Semana 2.** Coordinar el formato con #33 para que la app no tenga que adaptarse después.
+- [ ] `uvicorn api.main:app` levanta y responde `GET /zonas-riesgo` con GeoJSON válido.
+- [ ] Soporta parámetro de franja/tipo (p. ej. `?franja=noche`) y devuelve riesgo + cluster por zona.
+- [ ] Modelos cargados una sola vez al arranque (no por request).
+- [ ] `--host 0.0.0.0` documentado para acceso desde dispositivo físico por IP de LAN.
+- [ ] Esquema de respuesta documentado en `api/README.md` (acordado con Int. 3 y Int. 4).
 
 ---
 
-### [PRED] #20 — QA cruzada: evaluar el modelo de anomalías (Int. 3) 🔁
+### [PRED] #21 — Capa de datos y geofencing del móvil 🤝
 
-**Asignado a:** Integrante 2 (Predictivo)
-**Fase CRISP-ML:** 4
-**Estimación:** 1 día
-**Depende de:** #27
-**Bloquea a:** ninguno
+**Asignado a:** Integrante 2 (con Int. 4) · **Fase:** 5 · **Estimación:** 1.5 días
+**Depende de:** #20 · **Bloquea a:** #32 (móvil notificación)
 
-**Descripción:**
-**QA cruzada (nadie evalúa su propio modelo).** Evaluar críticamente el modelo de
-detección de anomalías de Integrante 3: validez de la métrica, robustez, casos de
-falso positivo/negativo, y reproducibilidad.
+**Descripción:** Lógica que consume `/zonas-riesgo` desde el cliente móvil, cachea
+el GeoJSON y resuelve **geofencing**: dada una coordenada GPS, determinar en qué
+localidad cae (point-in-polygon) y su nivel de riesgo. Es el "cerebro" de datos que
+Int. 4 conecta a la UI.
 
 **Criterios de aceptación:**
-- [ ] Reporte de evaluación independiente del modelo de anomalías.
-- [ ] Al menos 2 hallazgos accionables o confirmación de validez con evidencia.
-- [ ] Revisión de que no hay fuga de información ni métrica engañosa.
-
-**Notas técnicas:**
-QA cruzada definida en `CLAUDE.md §kickoff`. Documentar en `models/anomalias/qa_cruzada.md`.
+- [ ] Función `riesgoDeCoordenada(lat, lon)` que devuelve zona + nivel de riesgo a partir del GeoJSON de la API.
+- [ ] Manejo de coordenada fuera de Bogotá (sin zona) sin romper.
+- [ ] Cacheo del GeoJSON con refresco periódico configurable; tolerante a API caída (último valor conocido).
+- [ ] Contrato de la función acordado y entregado a Int. 4 (#31, #32).
 
 ---
 
-### [PRED] #21 — Documentación del modelo predictivo (model card)
+### [PRED] #22 — Análisis de error y robustez del predictivo
 
-**Asignado a:** Integrante 2 (Predictivo)
-**Fase CRISP-ML:** 4
-**Estimación:** 0.5 día
-**Depende de:** #18
-**Bloquea a:** ninguno
+**Asignado a:** Integrante 2 · **Fase:** 4 · **Estimación:** 1 día
+**Depende de:** #19 · **Bloquea a:** #24
 
-**Descripción:**
-Model card del predictivo: datos usados, features, métricas, limitaciones, y
-advertencia explícita sobre sesgo de vigilancia histórica.
+**Descripción:** Profundizar la evaluación: error por zona y por franja, curva
+precision-recall, calibración de probabilidades y robustez ante features
+faltantes/ruidosas (escenario de datos imperfectos en producción).
 
 **Criterios de aceptación:**
-- [ ] `models/predictivo/MODEL_CARD.md` completo.
-- [ ] Sección de limitaciones y riesgos éticos incluida.
-- [ ] Métricas finales y hiperparámetros documentados.
+- [ ] Desglose de recall/F1 por zona y franja (¿dónde falla el modelo?).
+- [ ] Curva precision-recall y umbral de decisión justificado para "riesgo alto".
+- [ ] Prueba de degradación con features faltantes/ruidosas documentada.
 
 ---
 
-# 🟨 INTEGRANTE 3 — ANOMALÍAS / NLP (Fase 3b)
+### [PRED] #23 — QA cruzada: revisar el clustering (Int. 3) 🔁
 
-### [ANOM] #22 — EDA de series temporales (en paralelo) 🟢
+**Asignado a:** Integrante 2 · **Fase:** 4 · **Estimación:** 0.5 día
+**Depende de:** #27 · **Bloquea a:** #24, #38
 
-**Asignado a:** Integrante 3 (Anomalías/NLP)
-**Fase CRISP-ML:** 3
-**Estimación:** 1 día
-**Depende de:** ninguno (usa crudos de #3/#4 apenas existan)
-**Bloquea a:** ninguno
-
-**Descripción:**
-Mientras llega el dataset unificado (#9), explorar las series temporales de
-incidentes por zona/franja para entender estacionalidad, tendencias y qué
-constituye un "pico atípico". Trabajo adelantado no bloqueante.
+**Descripción:** **QA cruzada (nadie evalúa su propio modelo).** Revisión corta del
+clustering de Int. 3 para la sección compartida de evaluación: ¿el k elegido se
+sostiene?, ¿las features tienen fuga?, ¿la tipología es interpretable? Deja un
+comentario de validación.
 
 **Criterios de aceptación:**
-- [ ] Notebook con series temporales por zona y por tipo de delito.
+- [ ] Comentario de validación cruzada del clustering en la sección compartida del informe.
+- [ ] Al menos 1 hallazgo accionable o confirmación de validez con evidencia.
+
+---
+
+### [PRED] #24 — Sección de modelado predictivo + evaluación compartida
+
+**Asignado a:** Integrante 2 · **Fase:** 3–4 (cierre) 🔵 · **Estimación:** 1 día
+**Depende de:** #22, #23 · **Bloquea a:** ninguno
+
+**Criterios de aceptación:**
+- [ ] Sección redactada con métricas (recall/F1 de clase riesgo), decisiones y limitaciones.
+- [ ] Métricas del predictivo en la sección compartida de evaluación + comentario cruzado de Int. 3 (#39).
+- [ ] Trazabilidad a "Tecnologías emergentes / IA" y "Rigor técnico".
+
+---
+
+# 🟨 INTEGRANTE 3 — CLUSTERING + DASHBOARD (Fase 3b + 5)
+
+### [CLUST] #25 — EDA para perfilado de zonas (en paralelo) 🟢
+
+**Asignado a:** Integrante 3 · **Fase:** 3 · **Estimación:** 1 día
+**Depende de:** ninguno (usa crudos de #3/#4) · **Bloquea a:** ninguno
+
+**Criterios de aceptación:**
+- [ ] Notebook con perfiles delictivos por zona (proporción por tipo y por franja).
 - [ ] Estacionalidad/tendencias identificadas (día, semana, mes).
-- [ ] Definición preliminar (cualitativa) de qué es una anomalía en este dominio.
+- [ ] Hipótesis preliminar de cuántos perfiles distintos podrían existir.
 
 ---
 
-### [ANOM] #23 — Definir "comportamiento esperado" por zona–franja
+### [CLUST] #26 — Features de perfil de zona + línea base z-score
 
-**Asignado a:** Integrante 3 (Anomalías/NLP)
-**Fase CRISP-ML:** 3
-**Estimación:** 1 día
-**Depende de:** #9
-**Bloquea a:** #24, #25
+**Asignado a:** Integrante 3 · **Fase:** 3 · **Estimación:** 1 día
+**Depende de:** #9 · **Bloquea a:** #27, #36
 
-**Descripción:**
-Establecer la línea base estadística de incidentes esperados por (zona, franja
-horaria) contra la cual se mide la desviación. Es el fundamento de la detección de
-anomalías.
+**Descripción:** Construir el vector de features por zona para el clustering (tasas
+por tipo de delito, distribución por franja, contexto), estandarizado. **Y** calcular
+la **línea base histórica (media/dispersión) por zona–franja** que usará el flag
+z-score (#36).
 
 **Criterios de aceptación:**
-- [ ] Baseline esperado (media/mediana + dispersión) por zona–franja calculado.
-- [ ] Método documentado y justificado.
-- [ ] Validado contra el EDA (#22) para que sea coherente.
+- [ ] Matriz zona × features estandarizada y documentada.
+- [ ] Línea base (media/mediana + dispersión) por zona–franja calculada y guardada.
+- [ ] Sin fuga: la línea base solo usa histórico, no el reporte que se evaluará.
 
 ---
 
-### [ANOM] #24 — Detección por z-score espacial/temporal
+### [CLUST] #27 — Entrenar K-Means + tipología + `clusters.joblib` 🎯
 
-**Asignado a:** Integrante 3 (Anomalías/NLP)
-**Fase CRISP-ML:** 3
-**Estimación:** 1.5 días
-**Depende de:** #23
-**Bloquea a:** #26
+**Asignado a:** Integrante 3 · **Fase:** 3 · **Estimación:** 2 días
+**Depende de:** #26 · **Bloquea a:** #20, #23, #28, #37
 
-**Descripción:**
-Implementar detección de anomalías por z-score: marcar (zona, franja) cuyo conteo
-se desvía significativamente de lo esperado. Método interpretable y barato.
+**Descripción:** Entrenar K-Means sobre las features de perfil de zona, elegir k con
+codo + silhouette, **caracterizar e interpretar** cada cluster como tipología
+accionable y serializar.
 
 **Criterios de aceptación:**
-- [ ] Función que calcula z-score por zona–franja y marca anomalías sobre un umbral.
-- [ ] Umbral justificado (ej. |z|>3) y configurable.
-- [ ] Ejemplos de anomalías detectadas inspeccionados manualmente.
+- [ ] Curva de codo + silhouette para un rango de k; k final justificado.
+- [ ] Cada zona asignada a un cluster; parámetros (k, n_init, random_state) reproducibles.
+- [ ] Tabla de perfiles por cluster con **nombre interpretable** ("perfil hurto-nocturno", etc.) + lectura accionable (1 párrafo por perfil).
+- [ ] `models/clustering/clusters.joblib` + `models/clustering/zona_cluster.parquet` (zona, cluster, nombre_perfil) para la API y el dashboard.
 
 ---
 
-### [ANOM] #25 — Detección con Isolation Forest
+### [CLUST] #28 — Validación interna del clustering
 
-**Asignado a:** Integrante 3 (Anomalías/NLP)
-**Fase CRISP-ML:** 3
-**Estimación:** 1.5 días
-**Depende de:** #9
-**Bloquea a:** #26
+**Asignado a:** Integrante 3 · **Fase:** 3 · **Estimación:** 1 día
+**Depende de:** #27 · **Bloquea a:** #39
 
-**Descripción:**
-Entrenar Isolation Forest multivariado (conteo + contexto + features temporales)
-como detector de anomalías complementario al z-score, capturando patrones no
-univariados.
+**Descripción:** Validar que la segmentación es estable y no arbitraria: silhouette
+por cluster, estabilidad ante semillas/submuestras, y comparación con una agrupación
+trivial (solo por conteo total).
 
 **Criterios de aceptación:**
-- [ ] Isolation Forest entrenado sobre features de zona–tiempo.
-- [ ] Anomalías comparadas con las del z-score (solapamiento/diferencias).
-- [ ] Parámetros (contamination, n_estimators) documentados.
+- [ ] Silhouette global y por cluster reportado.
+- [ ] Prueba de estabilidad (varias semillas / submuestreo) documentada.
+- [ ] Argumento de por qué la tipología aporta más que ordenar zonas por conteo.
 
 ---
 
-### [ANOM] #26 — Validación de la detección de anomalías
+### [CLUST] #29 — Función `flag_zscore()` para el reporte ciudadano 🤝
 
-**Asignado a:** Integrante 3 (Anomalías/NLP)
-**Fase CRISP-ML:** 3
-**Estimación:** 1 día
-**Depende de:** #24, #25
-**Bloquea a:** #27
+**Asignado a:** Integrante 3 · **Fase:** 4 · **Estimación:** 0.5 día
+**Depende de:** #26 · **Bloquea a:** #36
 
-**Descripción:**
-Validar los detectores: inyectar anomalías sintéticas conocidas y medir si se
-detectan; revisar falsos positivos en datos reales. Sin etiquetas reales, usar
-validación semi-sintética.
+**Descripción:** Entregar la función del flag de anomalía (input: zona, franja,
+conteo reciente; output: ¿desviación? + score) que el dashboard usa sobre el reporte
+ciudadano simulado.
 
 **Criterios de aceptación:**
-- [ ] Conjunto de anomalías sintéticas inyectadas y tasa de detección medida.
-- [ ] Análisis cualitativo de falsos positivos en datos reales.
-- [ ] Recomendación de cuál detector (o combinación) usar en producción.
+- [ ] `flag_zscore(zona, franja, conteo)` documentada y testeada con casos límite.
+- [ ] Acordada con la vista de reporte del dashboard (#36).
+- [ ] Sin fuga: usa solo la línea base histórica de #26.
 
 ---
 
-### [ANOM] #27 — Serializar modelo de anomalías + contrato para la app 🤝
+### [CLUST] #30 — QA cruzada: revisar el predictivo (Int. 2) 🔁
 
-**Asignado a:** Integrante 3 (Anomalías/NLP)
-**Fase CRISP-ML:** 3–5
-**Estimación:** 0.5 día
-**Depende de:** #26
-**Bloquea a:** #20, #38
+**Asignado a:** Integrante 3 · **Fase:** 4 · **Estimación:** 0.5 día
+**Depende de:** #19 · **Bloquea a:** #39
 
-**Descripción:**
-Exportar el detector elegido a `joblib` y definir con Integrante 4 cómo la app
-consulta anomalías (input: zona/periodo/conteo reciente; output: ¿es anomalía? +
-score). Entregar también a Integrante 2 para la QA cruzada (#20).
+**Descripción:** **QA cruzada.** Revisión corta del predictivo de Int. 2 para la
+sección compartida: ¿hay fuga temporal?, ¿la métrica es adecuada?, ¿solo replica
+sesgo de vigilancia? Deja un comentario de validación.
 
 **Criterios de aceptación:**
-- [ ] `models/anomalias/model.joblib` + `detect.py` con función de inferencia.
-- [ ] Contrato input/output acordado con Integrante 4 (#33).
-- [ ] Ejemplo de detección end-to-end funcionando (sin la app).
-
----
-
-### [ANOM] #28 — QA cruzada: evaluar el modelo predictivo (Int. 2) 🔁
-
-**Asignado a:** Integrante 3 (Anomalías/NLP)
-**Fase CRISP-ML:** 4
-**Estimación:** 1 día
-**Depende de:** #18
-**Bloquea a:** ninguno
-
-**Descripción:**
-**QA cruzada (nadie evalúa su propio modelo).** Evaluar críticamente el modelo
-predictivo de Integrante 2: validez del split temporal (¿hay fuga?), métrica
-adecuada, robustez, y si solo replica sesgo de vigilancia histórica.
-
-**Criterios de aceptación:**
-- [ ] Reporte de evaluación independiente del modelo predictivo.
+- [ ] Comentario de validación cruzada del predictivo en la sección compartida del informe.
 - [ ] Verificación explícita de ausencia de fuga temporal.
-- [ ] Al menos 2 hallazgos accionables o confirmación de validez con evidencia.
-
-**Notas técnicas:**
-Documentar en `models/predictivo/qa_cruzada.md`. Ver criterio de no replicar sesgo en `CLAUDE.md §4.4`.
+- [ ] Al menos 1 hallazgo accionable o confirmación de validez con evidencia.
 
 ---
 
-### [ANOM] #29 — [NICE-TO-HAVE] NLP de reportes ciudadanos
+### [CLUST] #31 — Auditoría de sesgo (predictivo + clustering)
 
-**Asignado a:** Integrante 3 (Anomalías/NLP)
-**Fase CRISP-ML:** 3
-**Estimación:** 1.5 días (solo si hay tiempo)
-**Depende de:** #26, #35
-**Bloquea a:** ninguno
+**Asignado a:** Integrante 3 · **Fase:** 4 · **Estimación:** 1 día
+**Depende de:** #11, #19, #27 · **Bloquea a:** #39
 
-**Descripción:**
-**NO BLOQUEANTE.** Si el tiempo lo permite, clasificar el texto libre de los
-reportes ciudadanos en tipo de delito y extraer entidades (hora/lugar). Solo
-empezar tras cerrar lo obligatorio (#26).
+**Descripción:** Auditar si los modelos **replican sesgo de sobre-vigilancia**: ¿las
+zonas de "alto riesgo" y los clusters peligrosos coinciden con zonas históricamente
+más patrulladas (más registros) y no necesariamente con más delito real? **La
+discusión de sesgo/estigmatización no se recorta.**
 
 **Criterios de aceptación:**
-- [ ] Clasificador de texto → tipo de delito con métrica básica reportada.
-- [ ] (Opcional) Extracción de entidades de ubicación/hora.
-- [ ] Si no se alcanza, queda documentado como "trabajo futuro" sin penalizar la entrega.
-
-**Notas técnicas:**
-Recortado a nice-to-have (ver §recorte de alcance). No arriesgar la entrega por esto.
+- [ ] Comparación entre intensidad de registro y proxys de delito real / contexto.
+- [ ] Al menos 2 riesgos de sesgo/estigmatización identificados con evidencia.
+- [ ] Recomendaciones de uso responsable (qué NO debe hacerse con el mapa).
 
 ---
 
-### [ANOM] #30 — Pruebas de robustez ante reportes ruidosos/faltantes
+### [CLUST] #32 — Scaffold del dashboard + consumo de `/zonas-riesgo` (con mock) 🟢
 
-**Asignado a:** Integrante 3 (Anomalías/NLP)
-**Fase CRISP-ML:** 4
-**Estimación:** 1 día
-**Depende de:** #27
-**Bloquea a:** ninguno
+**Asignado a:** Integrante 3 · **Fase:** 5 · **Estimación:** 1 día
+**Depende de:** ninguno (mock al inicio) · **Bloquea a:** #33, #34, #36
 
-**Descripción:**
-Probar cómo se comportan los detectores ante datos faltantes o ruidosos de los
-reportes ciudadanos (campos vacíos, ubicaciones imprecisas), según `CLAUDE.md §4.4`.
+**Descripción:** Montar `app/streamlit_app.py`, su `requirements.txt`, un mapa Folium
+base de Bogotá con `streamlit-folium`, y la función de consumo de la API
+(`@st.cache_data`) con un **mock** del GeoJSON de `/zonas-riesgo` para construir todo
+sin esperar a la API real.
 
 **Criterios de aceptación:**
-- [ ] Escenarios de ruido/faltantes simulados y evaluados.
-- [ ] Comportamiento degradado documentado (no rompe, no genera falsos masivos).
-- [ ] Recomendaciones de validación de input para la app (insumo para #35).
+- [ ] `streamlit run app/streamlit_app.py` levanta y muestra el mapa base de Bogotá.
+- [ ] Función de carga del GeoJSON (mock con el shape acordado en #20).
+- [ ] Layout base (sidebar de controles + área de mapa) + README de cómo correr.
 
 ---
 
-### [ANOM] #31 — Documentación del modelo de anomalías (model card)
+### [CLUST] #33 — Capas del mapa: coroplético de riesgo + puntos NUSE + tipología
 
-**Asignado a:** Integrante 3 (Anomalías/NLP)
-**Fase CRISP-ML:** 4
-**Estimación:** 0.5 día
-**Depende de:** #26
-**Bloquea a:** ninguno
+**Asignado a:** Integrante 3 · **Fase:** 5 · **Estimación:** 2 días
+**Depende de:** #5, #27, #32 · **Bloquea a:** #34
 
-**Descripción:**
-Model card de anomalías: método, supuestos, métricas de validación, limitaciones.
+**Descripción:** Sobre el scaffold, construir las tres capas con selector: (a)
+coroplético de localidades coloreado por riesgo, (b) puntos/densidad de NUSE donde
+haya lat/lon, (c) tipología de zonas del clustering (color + etiqueta de perfil).
 
 **Criterios de aceptación:**
-- [ ] `models/anomalias/MODEL_CARD.md` completo.
-- [ ] Supuestos estadísticos y limitaciones documentados.
-- [ ] Guía de interpretación de un "score de anomalía" para usuarios no técnicos.
+- [ ] Coroplético colorea las localidades por riesgo, con selector de franja/tipo y leyenda + tooltip por zona.
+- [ ] Capa de puntos/heatmap NUSE activable; si NUSE no trae lat/lon, degradar a densidad por zona y documentarlo.
+- [ ] Capa de tipología que colorea las zonas por cluster con la etiqueta de perfil (#27) y tooltip en lenguaje no técnico.
 
 ---
 
-# 🟥 INTEGRANTE 4 — DESPLIEGUE (Fase 5: backend/API + frontend)
+### [CLUST] #34 — Integrar la API real en el dashboard (reemplazar mock) 🤝
 
-### [APP] #32 — Scaffolding de la app (FastAPI + frontend) 🟢
+**Asignado a:** Integrante 3 · **Fase:** 5 · **Estimación:** 0.5 día
+**Depende de:** #20, #33 · **Bloquea a:** #40
 
-**Asignado a:** Integrante 4 (Despliegue)
-**Fase CRISP-ML:** 5
-**Estimación:** 1 día
-**Depende de:** ninguno (empieza día 1)
-**Bloquea a:** #34, #35, #36
-
-**Descripción:**
-Montar el esqueleto: proyecto FastAPI en `app/backend`, servidor de estáticos/Jinja
-para `app/frontend`, `requirements.txt`, y un endpoint `/health`. Todo corre con
-`uvicorn` desde día 1.
+**Descripción:** Apuntar el dashboard a la API real `GET /zonas-riesgo` en lugar del
+mock. **Sin datos mock en la demo final.**
 
 **Criterios de aceptación:**
-- [ ] `uvicorn app.backend.main:app --reload` levanta y `/health` responde 200.
-- [ ] Estructura backend/frontend creada con README de cómo correr.
-- [ ] Página frontend base sirve un mapa Leaflet vacío de Bogotá.
+- [ ] El mapa de riesgo y la tipología se alimentan del endpoint real.
+- [ ] GeoJSON cacheado (`@st.cache_data`), no re-pedido por cada interacción.
+- [ ] Prueba end-to-end: API → dashboard lo refleja. Sin mocks.
 
 ---
 
-### [APP] #33 — Definir contrato de API + modelo mock 🤝🟢
+### [CLUST] #35 — Sección de clustering + ética/sesgo del informe
 
-**Asignado a:** Integrante 4 (Despliegue)
-**Fase CRISP-ML:** 5
-**Estimación:** 1 día
-**Depende de:** #32
-**Bloquea a:** #34, #38
-
-**Descripción:**
-Definir el contrato de los endpoints (`/predict`, `/reportes`, `/anomalias`) y
-crear un **modelo mock** que devuelve datos falsos con el formato final. Permite
-construir toda la app sin esperar a los modelos reales.
+**Asignado a:** Integrante 3 · **Fase:** 3–4 (cierre) 🔵 · **Estimación:** 1 día
+**Depende de:** #27, #28, #31 · **Bloquea a:** ninguno
 
 **Criterios de aceptación:**
-- [ ] Esquemas Pydantic de request/response para cada endpoint.
-- [ ] Mock que devuelve respuestas con el shape acordado con #19 y #27.
-- [ ] Contrato documentado y validado con Integrantes 2 y 3.
-
-**Notas técnicas:**
-Acordar este contrato temprano evita retrabajo cuando lleguen `model.joblib` (#19, #27).
+- [ ] Sección de clustering con método, validación interna y tipología accionable.
+- [ ] **Discusión ética** con los hallazgos de la auditoría de sesgo (#31).
+- [ ] Métricas del clustering en la sección compartida + comentario cruzado de Int. 2 (#23).
+- [ ] Trazabilidad a "Innovación", "Impacto y escalabilidad" y requisito ético.
 
 ---
 
-### [APP] #34 — Endpoint `/predict` (mapa de riesgo)
+### [CLUST] #36 — Reporte ciudadano simulado en el dashboard + flag z-score (con Int. 4) 🤝
 
-**Asignado a:** Integrante 4 (Despliegue)
-**Fase CRISP-ML:** 5
-**Estimación:** 1 día
-**Depende de:** #33
-**Bloquea a:** #36
+**Asignado a:** Integrante 3 (con Int. 4) · **Fase:** 4–5 · **Estimación:** 1.5 días
+**Depende de:** #29, #32 · **Bloquea a:** ninguno
 
-**Descripción:**
-Endpoint que devuelve el nivel de riesgo por zona (y franja) para alimentar el mapa
-de calor. Inicialmente contra el mock; luego contra el modelo real (#38).
+**Descripción:** Formulario que añade un reporte (tipo, ubicación por clic en el mapa,
+hora, descripción) a `st.session_state` y lo dibuja como punto, **sin base de datos**.
+Aplica el `flag_zscore()` (#29) y muestra si es una desviación. Incluye el **aviso de
+privacidad / consentimiento opt-in**. Comparte con Int. 4 el patrón de aviso de
+privacidad para mantenerlo consistente con el permiso de GPS del móvil.
 
 **Criterios de aceptación:**
-- [ ] `GET /predict?periodo=...` devuelve riesgo por zona en JSON/GeoJSON.
-- [ ] Manejo de errores (parámetros inválidos → 4xx con mensaje claro).
-- [ ] Probado con el mock y documentado en OpenAPI (`/docs`).
+- [ ] El formulario añade un punto a la sesión y lo renderiza en el mapa.
+- [ ] El reporte dispara el flag z-score y muestra resultado interpretable.
+- [ ] Validación de input (rechaza coords fuera de Bogotá; campos requeridos; no rompe ante input ruidoso/faltante).
+- [ ] Checkbox de consentimiento opt-in + enlace al aviso de privacidad (Ley 1581/2012). **No se recorta.**
 
 ---
 
-### [APP] #35 — Endpoint de reportes ciudadanos + base de datos
+# 🟥 INTEGRANTE 4 — APP MÓVIL (Fase 5–6)
 
-**Asignado a:** Integrante 4 (Despliegue)
-**Fase CRISP-ML:** 5
-**Estimación:** 1.5 días
-**Depende de:** #32
-**Bloquea a:** #37, #29
+### [APP] #37 — Decisión de framework móvil + setup inicial 🔴🟢
 
-**Descripción:**
-CRUD mínimo de reportes ciudadanos: `POST /reportes` (tipo, lat/lon, hora,
-descripción) persistido en SQLite, y `GET /reportes` para listarlos. Incluir
-validación de input.
+**Asignado a:** Integrante 4 · **Fase:** 5 · **Estimación:** 0.5 día
+**Depende de:** ninguno (primeros días) · **Bloquea a:** #38, #39, #40, #41
+
+**Descripción:** **Decisión bloqueante de los primeros días.** Confirmar el framework
+móvil (recomendado **Expo / React Native** por el camino más corto a APK instalable y
+pruebas en dispositivo real con Expo Go). Dejar `mobile/` inicializado y corriendo.
 
 **Criterios de aceptación:**
-- [ ] `POST /reportes` persiste en BD y valida campos (rechaza coords fuera de Bogotá).
-- [ ] `GET /reportes` devuelve reportes recientes.
-- [ ] Esquema de BD documentado; coordenadas validadas según recomendaciones de #30.
-
-**Notas técnicas:**
-Form-based MVP (sin push). PostgreSQL/PostGIS queda como ruta de producción.
+- [ ] Framework decidido y registrado (recomendación por defecto: Expo / React Native).
+- [ ] `mobile/` inicializado (`npx create-expo-app`), `npm install` ok.
+- [ ] `npx expo start` levanta y abre en **Expo Go sobre un teléfono físico** (no solo emulador).
+- [ ] README de `mobile/` con cómo correr y cómo apuntar a la API por IP de LAN / túnel.
 
 ---
 
-### [APP] #36 — Frontend: mapa de calor de riesgo (Leaflet)
+### [APP] #38 — Pantalla principal + consumo de `/zonas-riesgo` (con mock)
 
-**Asignado a:** Integrante 4 (Despliegue)
-**Fase CRISP-ML:** 5
-**Estimación:** 1.5 días
-**Depende de:** #34
-**Bloquea a:** ninguno
+**Asignado a:** Integrante 4 · **Fase:** 5 · **Estimación:** 1 día
+**Depende de:** #37 · **Bloquea a:** #39, #40
 
-**Descripción:**
-Capa de calor sobre el mapa de Bogotá que consume `/predict` y colorea las zonas
-por nivel de riesgo, con selector de franja horaria/tipo de delito.
+**Descripción:** Pantalla de estado/mapa que muestra el nivel de riesgo de la zona
+actual, consumiendo un **mock** del GeoJSON de `/zonas-riesgo` mientras la API real
+no esté lista.
 
 **Criterios de aceptación:**
-- [ ] Mapa Leaflet muestra zonas coloreadas por riesgo desde la API.
-- [ ] Control para cambiar franja horaria/tipo de delito y re-consultar.
-- [ ] Leyenda de niveles de riesgo y tooltip por zona.
+- [ ] Pantalla principal con indicador de "riesgo de tu zona" alimentado por el mock.
+- [ ] Estado de carga/error si la API no responde.
+- [ ] Estructura de componentes lista para enchufar la capa de datos real (#21).
 
 ---
 
-### [APP] #37 — Frontend: formulario de reporte ciudadano
+### [APP] #39 — Geolocalización en tiempo real + permisos + privacidad opt-in 🎯
 
-**Asignado a:** Integrante 4 (Despliegue)
-**Fase CRISP-ML:** 5
-**Estimación:** 1 día
-**Depende de:** #35
-**Bloquea a:** ninguno
+**Asignado a:** Integrante 4 · **Fase:** 5 · **Estimación:** 1.5 días
+**Depende de:** #38 · **Bloquea a:** #40, #41
 
-**Descripción:**
-Formulario para que el usuario reporte un incidente: selección de ubicación en el
-mapa, tipo, hora y descripción; envía a `POST /reportes` y muestra los reportes en
-el mapa.
+**Descripción:** Leer la ubicación del dispositivo en tiempo real (`expo-location`)
+con muestreo periódico en primer plano. Solicitar el permiso de ubicación con un
+**aviso de privacidad / consentimiento opt-in** explícito antes de pedirlo.
 
 **Criterios de aceptación:**
-- [ ] Formulario con pin de ubicación en el mapa, envía a la API y confirma éxito/error.
-- [ ] Reportes existentes se renderizan como marcadores en el mapa.
-- [ ] Incluye checkbox de consentimiento + enlace al aviso de privacidad (ver #40).
+- [ ] La app solicita permiso de ubicación con aviso de privacidad opt-in (Ley 1581/2012). **No se recorta.**
+- [ ] Muestra la posición actual y la actualiza periódicamente en primer plano.
+- [ ] Manejo del caso "permiso denegado" sin romper (mensaje claro + modo demo disponible).
 
 ---
 
-### [APP] #38 — Integrar modelos reales (reemplazar mock) 🤝
+### [APP] #40 — Notificación local al entrar a zona de riesgo alto 🎯🤝
 
-**Asignado a:** Integrante 4 (Despliegue)
-**Fase CRISP-ML:** 5
-**Estimación:** 1 día
-**Depende de:** #19, #27, #34
-**Bloquea a:** ninguno (**sync point: integración final**)
+**Asignado a:** Integrante 4 · **Fase:** 5 · **Estimación:** 1.5 días
+**Depende de:** #21, #39 · **Bloquea a:** #42, #43
 
-**Descripción:**
-Cargar `models/predictivo/model.joblib` y `models/anomalias/model.joblib` en el
-backend y reemplazar el mock por inferencia real, respetando el contrato de #33.
+**Descripción:** Conectar el GPS (#39) con la capa de geofencing (#21): cuando la
+coordenada actual cae en una zona de riesgo alto, disparar una **notificación local**
+(`expo-notifications`). Evitar spam (notificar solo en la transición a zona alta).
 
 **Criterios de aceptación:**
-- [ ] `/predict` y `/anomalias` responden con inferencia real de los `.joblib`.
-- [ ] Latencia razonable (modelo cargado una vez al iniciar, no por request).
-- [ ] Prueba end-to-end: dato entra → modelo → mapa lo refleja.
-
-**Notas técnicas:**
-**Sync point Semana 2–3.** Depende de que #19 y #27 entreguen el formato acordado.
+- [ ] Al entrar a una zona de riesgo alto, se dispara una notificación local visible.
+- [ ] Anti-rebote: no re-notifica mientras se permanece en la misma zona; re-arma al salir.
+- [ ] Funciona con la app en primer plano sobre un dispositivo físico real.
 
 ---
 
-### [APP] #39 — Diseño de Fase 6: monitoring & model drift
+### [APP] #41 — Modo demo: ubicación simulada que dispara la alerta 🎯
 
-**Asignado a:** Integrante 4 (Despliegue)
-**Fase CRISP-ML:** 6
-**Estimación:** 0.5 día
-**Depende de:** ninguno
-**Bloquea a:** ninguno
+**Asignado a:** Integrante 4 (coords con Int. 3) · **Fase:** 5 · **Estimación:** 1 día
+**Depende de:** #40 · **Bloquea a:** #43
 
-**Descripción:**
-Documentar cómo se detectaría drift (cambios en patrones delictivos) y cómo se
-re-entrenaría el modelo incorporando nuevos reportes ciudadanos de forma periódica.
-Diseño en texto/diagrama, no implementación.
+**Descripción:** Modo demo con **coordenadas simuladas predefinidas** que recorren de
+una zona segura a una de riesgo alto, para disparar la alerta de forma **confiable**
+durante la presentación en vivo, sin depender de moverse físicamente. Las
+coordenadas de zona alta se eligen con Int. 3 a partir del modelo/tipología.
 
 **Criterios de aceptación:**
-- [ ] `docs/monitoring.md` con métricas de drift propuestas y umbrales.
-- [ ] Flujo de re-entrenamiento periódico descrito (frecuencia, trigger, datos).
-- [ ] Diagrama del ciclo de vida del modelo en producción.
+- [ ] Toggle "modo demo" que inyecta una ruta de coordenadas simuladas.
+- [ ] La ruta cruza a una zona de riesgo alto y dispara la notificación de forma reproducible.
+- [ ] Documentado el guion exacto de la demo (qué tocar, qué se verá).
 
 ---
 
-### [APP] #40 — QA de usabilidad + aviso de privacidad (Ley 1581)
+### [APP] #42 — Integrar la API real en la app + build instalable en dispositivo físico 🎯🤝
 
-**Asignado a:** Integrante 4 (Despliegue)
-**Fase CRISP-ML:** 4–5
-**Estimación:** 1 día
-**Depende de:** #37
-**Bloquea a:** ninguno
+**Asignado a:** Integrante 4 · **Fase:** 5 · **Estimación:** 1.5 días
+**Depende de:** #20, #40 · **Bloquea a:** #44
 
-**Descripción:**
-Revisión de usabilidad de la app y redacción del aviso de privacidad/consentimiento
-para los reportes ciudadanos (opt-in), conforme a Ley 1581/2012 (ver `CLAUDE.md §2`).
+**Descripción:** Reemplazar el mock por la API real (`/zonas-riesgo` por IP de LAN o
+túnel) y generar un **build instalable** probado en un **dispositivo físico real**
+(Android). **Sin datos mock en la entrega final.**
 
 **Criterios de aceptación:**
-- [ ] Checklist de usabilidad aplicado (navegación clara, estados de carga/error).
-- [ ] Aviso de privacidad redactado y enlazado desde el formulario.
-- [ ] Confirmado que no se recogen datos personales identificables innecesarios.
+- [ ] La app consume la API real; el riesgo mostrado/alertado proviene del endpoint, no de mock.
+- [ ] App instalada y corriendo en **al menos un dispositivo físico real** (no solo emulador): Expo Go + `eas build -p android` (APK).
+- [ ] Documentado cómo apuntar a la API (IP de LAN / túnel) y cómo instalar el APK.
 
 ---
 
-### [APP] #41 — Empaquetado y despliegue (deploy doc + hosting opcional)
+### [APP] #43 — Punto de control: ¿activar contingencia PWA? 🔴🤝
 
-**Asignado a:** Integrante 4 (Despliegue)
-**Fase CRISP-ML:** 5
-**Estimación:** 1 día
-**Depende de:** #38
-**Bloquea a:** ninguno
+**Asignado a:** Integrante 4 (decisión de equipo) · **Fase:** 5 · **Estimación:** 0.25 día
+**Depende de:** #40 · **Bloquea a:** #42 / #44
 
-**Descripción:**
-`Dockerfile`/instrucciones para correr todo end-to-end y, como **nice-to-have**,
-desplegar en un free tier (Render/Railway/HF Spaces) para tener una URL pública en
-la demo.
+**Descripción:** **Checkpoint de mitad de proyecto, a más tardar fin de Semana 2.**
+Evaluar si la app nativa tiene GPS + notificación local funcionando en un dispositivo
+físico real. Si **no**, activar el **plan B (PWA instalable)**: mismo flujo de GPS +
+Notification API del navegador, instalable vía "Agregar a pantalla de inicio",
+**consumiendo el mismo `/zonas-riesgo`** (el contrato no cambia, solo el cliente).
 
 **Criterios de aceptación:**
-- [ ] App corre con un solo comando documentado (Docker o script).
-- [ ] `docs/deploy.md` con pasos reproducibles.
-- [ ] (Nice-to-have) URL pública funcionando; si no, demo local documentada.
+- [ ] Decisión registrada (seguir con nativa / activar PWA) con la evidencia que la motivó.
+- [ ] Si se activa PWA: plan de tareas de la PWA definido para la Semana 3 sin tocar la API.
+- [ ] La decisión se toma a más tardar el último día de la Semana 2.
 
 ---
 
-### [APP] #42 — README de la app + flujo end-to-end
+### [APP] #44 — Diseño de Fase 6 (monitoring & drift) + demo + pitch + video + informe consolidado
 
-**Asignado a:** Integrante 4 (Despliegue)
-**Fase CRISP-ML:** 5
-**Estimación:** 0.5 día
-**Depende de:** #38
-**Bloquea a:** ninguno
+**Asignado a:** Integrante 4 (consolidación con todos) · **Fase:** 5–6 (cierre) 🔵 · **Estimación:** 2 días
+**Depende de:** #34, #42, #35, #24, #12 · **Bloquea a:** ninguno
 
-**Descripción:**
-Documentar en `app/` cómo correr backend+frontend, variables de entorno, y el flujo
-completo desde dataset → modelo → API → mapa.
+**Descripción:** Documentar el diseño de **monitoring & model drift** y el plan de
+re-entrenamiento; preparar la **demo en vivo** (dashboard + app móvil disparando la
+alerta en modo demo) y **consolidar las secciones de los 4** en un solo informe con
+la sección compartida de evaluación.
 
 **Criterios de aceptación:**
-- [ ] `app/README.md` con pasos de instalación y ejecución.
-- [ ] Diagrama o lista del flujo de datos end-to-end.
-- [ ] Capturas de pantalla de la app funcionando.
-
----
-
-# 🔵 CIERRE Y ENTREGA FINAL (repartido entre los 4)
-
-### [DATOS] #43 — Sección de datos del informe + diccionario consolidado
-
-**Asignado a:** Integrante 1 (Datos)
-**Fase CRISP-ML:** 1–2 (cierre)
-**Estimación:** 1 día
-**Depende de:** #9, #11
-**Bloquea a:** ninguno
-
-**Descripción:**
-Redactar la sección del informe sobre fuentes, pipeline y calidad de datos;
-consolidar los diccionarios de datos. Trazar a los criterios "Uso de datos
-abiertos" y "Rigor técnico".
-
-**Criterios de aceptación:**
-- [ ] Sección de datos del informe redactada con la lista final de datasets (URLs, fechas).
-- [ ] Diccionario de datos consolidado en `docs/`.
-- [ ] Trazabilidad explícita a los criterios de evaluación (`CLAUDE.md §5`).
-
----
-
-### [PRED] #44 — Sección de modelado predictivo del informe
-
-**Asignado a:** Integrante 2 (Predictivo)
-**Fase CRISP-ML:** 3–4 (cierre)
-**Estimación:** 1 día
-**Depende de:** #21, #28
-**Bloquea a:** ninguno
-
-**Descripción:**
-Redactar la sección de metodología y resultados del modelo predictivo, incluyendo
-la validación espacio-temporal y las conclusiones de la QA cruzada recibida.
-
-**Criterios de aceptación:**
-- [ ] Sección redactada con métricas, decisiones y limitaciones.
-- [ ] Incorpora hallazgos de la QA cruzada (#28).
-- [ ] Trazabilidad a "Uso de tecnologías emergentes / IA" y "Rigor técnico".
-
----
-
-### [ANOM] #45 — Sección de anomalías + ética/sesgo del informe
-
-**Asignado a:** Integrante 3 (Anomalías/NLP)
-**Fase CRISP-ML:** 3–4 (cierre)
-**Estimación:** 1 día
-**Depende de:** #31, #20
-**Bloquea a:** ninguno
-
-**Descripción:**
-Redactar la sección de detección de anomalías y la discusión ética (sesgo de
-vigilancia, estigmatización de barrios, uso responsable de datos) — diferenciador
-clave del proyecto.
-
-**Criterios de aceptación:**
-- [ ] Sección de anomalías redactada con método y validación.
-- [ ] Discusión ética alineada a `CLAUDE.md §4.4` (sesgo, estigmatización).
-- [ ] Trazabilidad a "Innovación" e "Impacto y escalabilidad".
-
----
-
-### [APP] #46 — Demo en vivo + pitch + video
-
-**Asignado a:** Integrante 4 (Despliegue)
-**Fase CRISP-ML:** 5–6 (cierre)
-**Estimación:** 1 día
-**Depende de:** #41, #42
-**Bloquea a:** ninguno
-
-**Descripción:**
-Preparar la demostración final: guion de demo en vivo de la app, pitch deck y un
-video corto. Coordina la integración de las secciones de los 4 en un solo informe.
-
-**Criterios de aceptación:**
-- [ ] Guion de demo que recorre mapa de riesgo + reporte ciudadano + anomalía.
-- [ ] Pitch deck cubriendo los 6 criterios de evaluación.
-- [ ] Video corto (2–3 min) e informe final consolidado.
+- [ ] `docs/monitoring.md`: métricas de drift, umbrales, frecuencia/trigger de re-entrenamiento, diagrama del ciclo de vida.
+- [ ] Guion de demo que recorre dashboard (coroplético + tipología + reporte con flag) y app móvil (alerta en modo demo).
+- [ ] Pitch deck cubriendo los 6 criterios + video corto (2–3 min).
+- [ ] **Informe final consolidado** (secciones de los 4 + evaluación compartida).
 
 ---
 
@@ -995,11 +731,12 @@ video corto. Coordina la integración de las secciones de los 4 en un solo infor
 
 | Integrante | Issues | Estimación aprox. |
 |---|---|---|
-| 1 — Datos | #1–#11, #43 (12 issues) | ~12.5 días-persona |
-| 2 — Predictivo | #12–#21, #44 (11 issues) | ~11 días-persona |
-| 3 — Anomalías/NLP | #22–#31, #45 (11 issues) | ~11.5 días-persona (NLP excluido del crítico) |
-| 4 — Despliegue | #32–#42, #46 (12 issues) | ~12 días-persona |
+| 1 — Datos | #1–#12 (12 issues) | ~13 días-persona (ruta crítica, front-loaded) |
+| 2 — Predictivo + API | #13–#24 (12 issues) | ~12.5 días-persona |
+| 3 — Clustering + Dashboard | #25–#36 (12 issues) | ~12.5 días-persona |
+| 4 — App móvil | #37–#44 (8 issues) | ~11.5 días-persona (móvil es el frente de mayor riesgo) |
 
-> Las estimaciones son días-persona de trabajo efectivo, no días de calendario.
-> En 2.5 semanas part-time (4 integrantes) son holgura razonable **si** el sync
-> point de fin de Semana 1 (dataset #9) se cumple. Ver `CRONOGRAMA.md`.
+> Int. 1 es la ruta crítica: hasta que exista el dataset unificado (#9), los demás
+> trabajan con datos crudos o mocks. La app móvil se reparte entre Int. 2 (API +
+> datos/geofencing) e Int. 4 (cliente, GPS, notificaciones, build). El NLP
+> nice-to-have (no listado) solo se aborda si Int. 3 cierra lo obligatorio con holgura.

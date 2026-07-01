@@ -1,0 +1,12 @@
+# Pipeline de datos — Alerta Ciudadana (Integrante 1)
+# Versiones verificadas en Windows + Python 3.13 (2026-06-30).
+# Instalar en un venv:  python -m venv .venv && .venv/Scripts/pip install -r requirements.txt
+pandas==3.0.3
+geopandas==1.1.4
+pyarrow==24.0.0
+pyogrio==0.13.0          # backend de I/O geoespacial de GeoPandas 1.x (reemplaza a fiona)
+shapely==2.1.2
+numpy==2.5.0
+requests==2.34.2
+tqdm==4.68.3
+openpyxl==3.1.5          # por si alguna fuente futura llega en .xlsx

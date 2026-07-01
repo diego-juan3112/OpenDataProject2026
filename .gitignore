@@ -27,15 +27,20 @@ env/
 .pytest_cache/
 .mypy_cache/
 
-# --- App / BD local ---
-app/backend/*.db
-app/backend/.env
+# --- Secretos / BD local ---
+.env
+*.db
 *.sqlite
 *.sqlite3
+
+# --- Node / Expo (mobile) ---
+node_modules/
+.expo/
+dist/
+*.log
 
 # --- IDE / SO ---
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
-.dist/
