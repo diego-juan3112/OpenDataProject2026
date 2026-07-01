@@ -137,17 +137,19 @@ legal y ética del proyecto (Ley 1581/2012, Ley 1712/2014).
    años ≤2024, evaluar 2025; nunca K-fold aleatorio).
 
 2. **Clustering de zonas (K-Means).** Agrupa las localidades de Bogotá por **perfil
-   delictivo** (mezcla de tipos de delito, franjas horarias y contexto
-   socioeconómico) y produce una **tipología interpretable de zonas** (p. ej.
-   "perfil hurto-nocturno", "perfil violencia-intrafamiliar", "perfil de bajo
+   delictivo** (mezcla de tipos de delito, señal de NUSE y contexto
+   socioeconómico; la franja horaria no existe en el dato abierto, ver Nota de
+   validación) y produce una **tipología interpretable de zonas** (p. ej.
+   "perfil hurto-alto", "perfil violencia-intrafamiliar", "perfil de bajo
    incidente"). No es un ranking por conteo: es una segmentación accionable que
    colorea y etiqueta el mapa coroplético. El nivel intermedio de la convocatoria
    nombra literalmente clustering, su validación interna es directa
    (elbow / silhouette) y el resultado es un insight comunicable a planeación.
 
 3. **Detección de anomalías por z-score.** Cuando llega un reporte ciudadano
-   simulado, se compara la **frecuencia reciente** de esa zona–franja contra su
-   **línea base histórica** y se marca si el patrón es atípico. Es un chequeo
+   simulado, se compara la **frecuencia reciente** de esa zona–tipo de delito contra
+   su **línea base histórica** (media/desviación de los conteos anuales) y se marca
+   si el patrón es atípico. Es un chequeo
    estadístico que vive dentro del cliente (dashboard), no un modelo con ciclo de
    vida propio; preserva el diferenciador "reporte verificado contra el histórico".
 
@@ -213,8 +215,8 @@ legal y ética del proyecto (Ley 1581/2012, Ley 1712/2014).
 
 Único endpoint del sistema. Devuelve un **GeoJSON** de las localidades de Bogotá,
 cada una con: geometría, **nivel/probabilidad de riesgo** (modelo predictivo),
-**cluster + nombre de perfil** (clustering) y metadatos (código DANE, franja
-consultada). Tanto el dashboard como la app móvil consumen este mismo contrato; el
+**cluster + nombre de perfil** (clustering) y metadatos (código DANE, año y tipo de
+delito consultados). Tanto el dashboard como la app móvil consumen este mismo contrato; el
 contrato no cambia según el cliente. Se sirve con **FastAPI** (un solo endpoint,
 sin BD), cargando `model.joblib` y `clusters.joblib` en memoria.
 

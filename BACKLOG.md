@@ -88,13 +88,15 @@ violencia intrafamiliar, delitos sexuales, etc.) filtrado a Bogotá. Script repr
 **Asignado a:** Integrante 1 · **Fase:** 2 · **Estimación:** 1 día
 **Depende de:** #1, #2 · **Bloquea a:** #7, #8
 
-**Descripción:** Cargar incidentes tramitados C4 (Línea 123) de Bogotá. Es la fuente
-con mayor probabilidad de georreferenciación fina y sostiene la capa de puntos.
+**Descripción:** Cargar las llamadas de emergencia de la Línea 123 (C4) de Bogotá.
+El dato abierto **viene agregado por localidad y UPZ × mes × tipo** (verificado: no
+trae la ubicación exacta de cada llamada). Sostiene la **capa de densidad por UPZ**
+del mapa, no una capa de puntos.
 
 **Criterios de aceptación:**
 - [ ] `data-engineering/ingest_nuse.py` reproducible.
-- [ ] Verificado si trae lat/lon por incidente; si solo trae localidad, documentarlo (afecta la capa de puntos).
-- [ ] Coordenadas validadas dentro del bounding box de Bogotá; tipos normalizados a categorías comparables con SIEDCO.
+- [ ] Confirmado que el dato es agregado por localidad/UPZ (sin lat/lon por incidente) y documentado.
+- [ ] Conteo de llamadas por localidad, UPZ, mes y tipo, con tipos normalizados a categorías comparables con SIEDCO.
 
 ---
 
@@ -136,13 +138,13 @@ NBI/pobreza multidimensional) **agregadas y anonimizadas**. Nunca microdatos.
 **Depende de:** #3, #4 · **Bloquea a:** #8, #9
 
 **Descripción:** Limpiar cada fuente: tipos, nulos, duplicados, normalización de
-categorías de delito entre SIEDCO y NUSE, parsing de fecha/hora a franjas horarias.
-Documentar el diccionario de datos real por fuente.
+categorías de delito entre SIEDCO y NUSE, y normalización del **año** (grano temporal
+del proyecto). Documentar el diccionario de datos real por fuente.
 
 **Criterios de aceptación:**
 - [ ] Reporte de calidad por fuente (% nulos, duplicados, fuera de rango).
 - [ ] Taxonomía común de delitos documentada (la consumen Int. 2 e Int. 3).
-- [ ] Franja horaria y día de semana derivados.
+- [ ] Columna `anio` limpia y consistente entre fuentes (no hay hora en el dato abierto; ver Nota de validación, CLAUDE.md §1).
 - [ ] `docs/data-dictionaries/` con un `.md` por fuente (columna, tipo, descripción, dominio).
 
 ---
@@ -152,13 +154,14 @@ Documentar el diccionario de datos real por fuente.
 **Asignado a:** Integrante 1 · **Fase:** 2 · **Estimación:** 1.5 días
 **Depende de:** #5, #7 · **Bloquea a:** #9
 
-**Descripción:** Unir SIEDCO, NUSE y contexto DANE a la unidad espacial (spatial
-join de los incidentes georreferenciados de NUSE; join por código para SIEDCO).
+**Descripción:** Unir SIEDCO, NUSE y contexto DANE a la unidad espacial (localidad)
+**por código de localidad DANE**, nunca por nombre. Como ninguna fuente trae
+coordenada-punto, el cruce es un join por código, no un spatial join.
 
 **Criterios de aceptación:**
-- [ ] Spatial join NUSE→zona con GeoPandas; % de incidentes sin zona <5% reportado.
-- [ ] Join SIEDCO→zona por código DANE sin pérdida de filas no justificada.
-- [ ] Mismo CRS en todas las geometrías antes del join.
+- [ ] Join SIEDCO→localidad por código DANE sin pérdida de filas no justificada.
+- [ ] Join NUSE→localidad por código DANE (el UPZ se mantiene como detalle para la capa de densidad).
+- [ ] Contexto DANE (población, NBI) unido por código de localidad; cero cruces por nombre de texto libre.
 
 ---
 
@@ -167,14 +170,14 @@ join de los incidentes georreferenciados de NUSE; join por código para SIEDCO).
 **Asignado a:** Integrante 1 · **Fase:** 2 · **Estimación:** 2 días
 **Depende de:** #6, #8 · **Bloquea a:** #16, #18, #27, #28 — **ENTREGABLE CLAVE, fin Semana 1 (SYNC-1)**
 
-**Descripción:** Tabla analítica final: una fila por **(zona × franja temporal ×
-tipo de delito)** con conteo de incidentes + variables de contexto. Desbloquea el
-modelado de Int. 2 (predictivo) e Int. 3 (clustering).
+**Descripción:** Tabla analítica final: una fila por **(localidad × año × tipo de
+delito)** con conteo de incidentes (SIEDCO y NUSE) + variables de contexto (población,
+NBI). Desbloquea el modelado de Int. 2 (predictivo) e Int. 3 (clustering).
 
 **Criterios de aceptación:**
 - [ ] `data/processed/dataset_analitico.parquet` generado por `build_dataset.py` reproducible.
-- [ ] Esquema documentado: claves (zona, periodo, tipo_delito), features de contexto, target.
-- [ ] Sin fuga temporal en la construcción (no usar info del futuro en una fila pasada).
+- [ ] Esquema documentado: claves (`cod_localidad`, `anio`, `tipo_delito`), features de contexto (`conteo_siedco`, `conteo_nuse`, `poblacion`, `ipm_nbi`) y marca `split`.
+- [ ] Split espacio-temporal marcado sin fuga: `train` = años ≤2024, `test` = 2025.
 - [ ] Notebook de ejemplo de carga + descripción de columnas entregado al equipo.
 
 **Notas técnicas:** Avisar al equipo en cuanto esté listo (SYNC-1).
@@ -186,9 +189,10 @@ modelado de Int. 2 (predictivo) e Int. 3 (clustering).
 **Asignado a:** Integrante 1 (con Int. 2) · **Fase:** 2–3 · **Estimación:** 1 día
 **Depende de:** #9 · **Bloquea a:** #17
 
-**Descripción:** Definir cómo se etiqueta "riesgo alto" (umbral de conteo / percentil
-por zona) y caracterizar el desbalance. Acordar estrategia (class_weight, SMOTE) con
-Int. 2. **El manejo explícito de desbalance no se recorta.**
+**Descripción:** Definir cómo se etiqueta "riesgo alto" para cada fila
+**(localidad × año × tipo de delito)** — por ejemplo, percentil alto del conteo — y
+caracterizar el desbalance. Acordar estrategia (class_weight, SMOTE) con Int. 2.
+**El manejo explícito de desbalance no se recorta.**
 
 **Criterios de aceptación:**
 - [ ] Definición de la clase objetivo documentada y justificada.
@@ -325,11 +329,11 @@ inferencia `predict.py`.
 **Descripción:** Único endpoint del sistema. Carga `model.joblib` y `clusters.joblib`
 en memoria y devuelve un **GeoJSON** de las localidades de Bogotá con: geometría,
 nivel/probabilidad de riesgo (predictivo), cluster + nombre de perfil (clustering) y
-metadatos (código DANE, franja consultada). **Mismo contrato para ambos clientes.**
+metadatos (código DANE, año y tipo consultados). **Mismo contrato para ambos clientes.**
 
 **Criterios de aceptación:**
 - [ ] `uvicorn api.main:app` levanta y responde `GET /zonas-riesgo` con GeoJSON válido.
-- [ ] Soporta parámetro de franja/tipo (p. ej. `?franja=noche`) y devuelve riesgo + cluster por zona.
+- [ ] Soporta parámetros de año y tipo de delito (p. ej. `?anio=2025&tipo=hurto_personas`) y devuelve riesgo + cluster por localidad.
 - [ ] Modelos cargados una sola vez al arranque (no por request).
 - [ ] `--host 0.0.0.0` documentado para acceso desde dispositivo físico por IP de LAN.
 - [ ] Esquema de respuesta documentado en `api/README.md` (acordado con Int. 3 y Int. 4).
@@ -359,12 +363,12 @@ Int. 4 conecta a la UI.
 **Asignado a:** Integrante 2 · **Fase:** 4 · **Estimación:** 1 día
 **Depende de:** #19 · **Bloquea a:** #24
 
-**Descripción:** Profundizar la evaluación: error por zona y por franja, curva
-precision-recall, calibración de probabilidades y robustez ante features
+**Descripción:** Profundizar la evaluación: error por localidad y por tipo de delito,
+curva precision-recall, calibración de probabilidades y robustez ante features
 faltantes/ruidosas (escenario de datos imperfectos en producción).
 
 **Criterios de aceptación:**
-- [ ] Desglose de recall/F1 por zona y franja (¿dónde falla el modelo?).
+- [ ] Desglose de recall/F1 por localidad y por tipo de delito (¿dónde falla el modelo?).
 - [ ] Curva precision-recall y umbral de decisión justificado para "riesgo alto".
 - [ ] Prueba de degradación con features faltantes/ruidosas documentada.
 
@@ -406,8 +410,8 @@ comentario de validación.
 **Depende de:** ninguno (usa crudos de #3/#4) · **Bloquea a:** ninguno
 
 **Criterios de aceptación:**
-- [ ] Notebook con perfiles delictivos por zona (proporción por tipo y por franja).
-- [ ] Estacionalidad/tendencias identificadas (día, semana, mes).
+- [ ] Notebook con perfiles delictivos por localidad (proporción de cada tipo de delito).
+- [ ] Tendencia por año identificada (¿sube o baja cada tipo de delito por localidad?).
 - [ ] Hipótesis preliminar de cuántos perfiles distintos podrían existir.
 
 ---
@@ -417,14 +421,14 @@ comentario de validación.
 **Asignado a:** Integrante 3 · **Fase:** 3 · **Estimación:** 1 día
 **Depende de:** #9 · **Bloquea a:** #27, #36
 
-**Descripción:** Construir el vector de features por zona para el clustering (tasas
-por tipo de delito, distribución por franja, contexto), estandarizado. **Y** calcular
-la **línea base histórica (media/dispersión) por zona–franja** que usará el flag
-z-score (#36).
+**Descripción:** Construir el vector de features por localidad para el clustering
+(tasas por tipo de delito, señal de NUSE, contexto socioeconómico), estandarizado.
+**Y** calcular la **línea base histórica (media/dispersión) por localidad–tipo de
+delito** (sobre los conteos anuales) que usará el flag z-score (#36).
 
 **Criterios de aceptación:**
-- [ ] Matriz zona × features estandarizada y documentada.
-- [ ] Línea base (media/mediana + dispersión) por zona–franja calculada y guardada.
+- [ ] Matriz localidad × features estandarizada y documentada.
+- [ ] Línea base (media + desviación) por localidad–tipo de delito, calculada con los conteos anuales del histórico, y guardada.
 - [ ] Sin fuga: la línea base solo usa histórico, no el reporte que se evaluará.
 
 ---
@@ -441,7 +445,7 @@ accionable y serializar.
 **Criterios de aceptación:**
 - [ ] Curva de codo + silhouette para un rango de k; k final justificado.
 - [ ] Cada zona asignada a un cluster; parámetros (k, n_init, random_state) reproducibles.
-- [ ] Tabla de perfiles por cluster con **nombre interpretable** ("perfil hurto-nocturno", etc.) + lectura accionable (1 párrafo por perfil).
+- [ ] Tabla de perfiles por cluster con **nombre interpretable** ("perfil hurto-alto", "perfil violencia-intrafamiliar", etc.) + lectura accionable (1 párrafo por perfil).
 - [ ] `models/clustering/clusters.joblib` + `models/clustering/zona_cluster.parquet` (zona, cluster, nombre_perfil) para la API y el dashboard.
 
 ---
@@ -467,12 +471,13 @@ trivial (solo por conteo total).
 **Asignado a:** Integrante 3 · **Fase:** 4 · **Estimación:** 0.5 día
 **Depende de:** #26 · **Bloquea a:** #36
 
-**Descripción:** Entregar la función del flag de anomalía (input: zona, franja,
-conteo reciente; output: ¿desviación? + score) que el dashboard usa sobre el reporte
-ciudadano simulado.
+**Descripción:** Entregar la función del flag de anomalía (input: localidad, tipo de
+delito, conteo reciente; output: ¿desviación? + score) que el dashboard usa sobre el
+reporte ciudadano simulado. Compara el conteo reciente contra la línea base histórica
+por localidad–tipo (#26).
 
 **Criterios de aceptación:**
-- [ ] `flag_zscore(zona, franja, conteo)` documentada y testeada con casos límite.
+- [ ] `flag_zscore(localidad, tipo_delito, conteo)` documentada y testeada con casos límite.
 - [ ] Acordada con la vista de reporte del dashboard (#36).
 - [ ] Sin fuga: usa solo la línea base histórica de #26.
 
@@ -534,12 +539,13 @@ sin esperar a la API real.
 **Depende de:** #5, #27, #32 · **Bloquea a:** #34
 
 **Descripción:** Sobre el scaffold, construir las tres capas con selector: (a)
-coroplético de localidades coloreado por riesgo, (b) puntos/densidad de NUSE donde
-haya lat/lon, (c) tipología de zonas del clustering (color + etiqueta de perfil).
+coroplético de localidades coloreado por riesgo, (b) densidad de NUSE por localidad/UPZ
+(el dato es agregado, no trae lat/lon), (c) tipología de zonas del clustering (color +
+etiqueta de perfil).
 
 **Criterios de aceptación:**
-- [ ] Coroplético colorea las localidades por riesgo, con selector de franja/tipo y leyenda + tooltip por zona.
-- [ ] Capa de puntos/heatmap NUSE activable; si NUSE no trae lat/lon, degradar a densidad por zona y documentarlo.
+- [ ] Coroplético colorea las localidades por riesgo, con selector de año/tipo de delito y leyenda + tooltip por localidad.
+- [ ] Capa de densidad NUSE activable, coloreada por volumen de llamadas por localidad/UPZ (sin puntos, porque el dato es agregado).
 - [ ] Capa de tipología que colorea las zonas por cluster con la etiqueta de perfil (#27) y tooltip en lenguaje no técnico.
 
 ---
@@ -577,11 +583,12 @@ mock. **Sin datos mock en la demo final.**
 **Asignado a:** Integrante 3 (con Int. 4) · **Fase:** 4–5 · **Estimación:** 1.5 días
 **Depende de:** #29, #32 · **Bloquea a:** ninguno
 
-**Descripción:** Formulario que añade un reporte (tipo, ubicación por clic en el mapa,
-hora, descripción) a `st.session_state` y lo dibuja como punto, **sin base de datos**.
-Aplica el `flag_zscore()` (#29) y muestra si es una desviación. Incluye el **aviso de
-privacidad / consentimiento opt-in**. Comparte con Int. 4 el patrón de aviso de
-privacidad para mantenerlo consistente con el permiso de GPS del móvil.
+**Descripción:** Formulario que añade un reporte (tipo de delito, ubicación por clic en
+el mapa, descripción) a `st.session_state` y lo dibuja como punto, **sin base de datos**.
+Aplica el `flag_zscore()` (#29) —que compara por **localidad + tipo de delito** contra
+el histórico— y muestra si es una desviación. Incluye el **aviso de privacidad /
+consentimiento opt-in**. Comparte con Int. 4 el patrón de aviso de privacidad para
+mantenerlo consistente con el permiso de GPS del móvil.
 
 **Criterios de aceptación:**
 - [ ] El formulario añade un punto a la sesión y lo renderiza en el mapa.

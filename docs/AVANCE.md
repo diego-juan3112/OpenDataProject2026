@@ -27,14 +27,16 @@ dashboard). Todo se construye sobre **datos abiertos oficiales** (nada inventado
 | #4 Ingesta NUSE | Llamadas a la Línea 123 | ✅ Hecho |
 | #5 Geometría de localidades | Los "mapas" de las 20 zonas | ✅ Hecho |
 | + API datos.gov.co | Consumo directo del portal nacional | ✅ Hecho |
-| #6 Contexto DANE | Población, pobreza por zona | ⏳ Sigue |
-| #7 Limpieza final | Unificar reglas de calidad | ⏳ Sigue |
-| #8 Cruce de fuentes | Unir todo por código de zona | ⏳ Sigue |
-| **#9 Dataset analítico** 🎯 | **El archivo final que todos usan** | ⏳ Sigue |
+| #6 Contexto DANE | Población, pobreza por zona | ✅ Hecho |
+| #7 Limpieza final | Unificar reglas de calidad | ✅ Hecho |
+| #8 Cruce de fuentes | Unir todo por código de zona | ✅ Hecho |
+| **#9 Dataset analítico** 🎯 | **El archivo final que todos usan** | ✅ Hecho |
 
-**Traducción:** de 12 tareas del frente de datos, **llevamos 5 completas + 1 extra**.
-Falta el tramo de unir todo en un solo archivo (#6 → #9), que es la meta de la
-Semana 1.
+**Traducción:** las **9 tareas del tramo #1–#9 + 1 extra están completas**. El
+entregable clave de la Semana 1 (SYNC-1) —`dataset_analitico.parquet` +
+`zonas_bogota.geojson`— **ya existe y desbloquea al resto del equipo**. Quedan las
+tareas de cierre del frente de datos (#10 target/desbalance, #11 EDA de calidad,
+#12 sección del informe).
 
 ---
 
@@ -170,16 +172,17 @@ usamos solo para evaluar, no para entrenar.
 
 ## 8. ¿Qué sigue? (próximos pasos claros)
 
-**Frente de datos (Integrante 1), para cerrar la Semana 1:**
-1. **#6 Contexto DANE** — añadir población y pobreza (NBI) por localidad, para que
-   el modelo entienda el contexto de cada zona.
-2. **#7 Limpieza final** — consolidar todas las reglas de calidad en un solo paso.
-3. **#8 Cruce** — unir las 4 fuentes por el **código de la localidad** (nunca por
-   nombre, porque los nombres varían entre fuentes).
-4. **#9 Dataset analítico** 🎯 — el archivo final `dataset_analitico.parquet` +
-   `zonas_bogota.geojson`. **Cuando esto exista, arranca todo el resto del equipo.**
+**Frente de datos (Integrante 1), tareas de cierre:**
+1. **#10 Variable objetivo + desbalance** — definir con Int. 2 cómo se etiqueta
+   "riesgo alto" por (localidad × año × tipo) y la estrategia de balanceo.
+2. **#11 EDA de calidad + nota de sesgo** — insumo para la auditoría de sesgo (#31).
+3. **#12 Sección de datos del informe** — diccionario consolidado y trazabilidad.
 
-**Los demás integrantes (Semana 2, cuando #9 esté listo):**
+> ✅ **#6 → #9 ya cerradas (SYNC-1).** El dataset analítico
+> `dataset_analitico.parquet` + `zonas_bogota.geojson` **ya existe y desbloqueó al
+> resto del equipo.**
+
+**Los demás integrantes (Semana 2, ya con #9 listo):**
 - **Integrante 2:** modelo predictivo de riesgo + la API que sirve los datos.
 - **Integrante 3:** agrupación de zonas por perfil (clustering) + el dashboard.
 - **Integrante 4:** la app móvil que dispara la alerta al entrar a una zona de
