@@ -1,21 +1,21 @@
 """
-build_dataset.py — Issue #9  🎯
+pipeline_ml.py (antes build_dataset.py) — Issue #9  🎯
 
 Script maestro del pipeline de datos. Corre de inicio a fin sin intervención
 manual y produce los DOS entregables que desbloquean al resto del equipo (SYNC-1):
 
-  data/processed/dataset_analitico.parquet   (cod_localidad × anio × tipo_delito)
-  data/processed/zonas_bogota.geojson        (20 polígonos, EPSG:4326)
+  data/03_primary/dataset_analitico.parquet   (cod_localidad × anio × tipo_delito)
+  data/03_primary/zonas_bogota.geojson        (20 polígonos, EPSG:4326)
 
 Orquesta: limpieza (Issue #7) → cruce por código (Issue #8) → marca de split
 espacio-temporal → escritura de salidas + verificación.
 
-Requisitos previos (ingesta, Issues #3–#6) — deben existir en data/interim/:
+Requisitos previos (ingesta, Issues #3–#6) — deben existir en data/02_intermediate/:
   siedco_delitos.parquet · nuse_incidentes.parquet · localidades.geojson ·
   dane_contexto.parquet. Si falta dane_contexto, se genera al vuelo (Issue #6).
 
 Uso:
-    python data-engineering/build_dataset.py
+    python pipelines/pipeline_ml.py
 """
 
 from __future__ import annotations
@@ -25,10 +25,10 @@ from pathlib import Path
 
 import pandas as pd
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 import config
-import clean_normalize
-import join_sources
+import data_cleaning
+import pipeline_integration
 
 # Columnas finales del dataset analítico (contrato con Integrantes 2 y 3).
 COLS_FINAL = [
@@ -66,20 +66,20 @@ def run() -> pd.DataFrame:
     _requisitos()
 
     # 1) Limpieza consolidada (regenera *_clean.parquet, idempotente).
-    clean_normalize.run()
+    data_cleaning.run()
 
     # 2) Cruce por código + validación.
-    join_sources.run()
+    pipeline_integration.run()
 
     # 3) Tabla analítica + split.
-    df = join_sources.tabla_analitica().rename(columns={"ipm_pct": "ipm_nbi"})
+    df = pipeline_integration.tabla_analitica().rename(columns={"ipm_pct": "ipm_nbi"})
     df = _marcar_split(df)
     df = df[COLS_FINAL].sort_values(["cod_localidad", "anio", "tipo_delito"]).reset_index(drop=True)
 
     # 4) Escritura de salidas finales.
     df.to_parquet(config.DATASET_ANALITICO, index=False)
 
-    zonas = join_sources.tabla_zonas()
+    zonas = pipeline_integration.tabla_zonas()
     config.ZONAS_GEOJSON.unlink(missing_ok=True)
     zonas.to_file(config.ZONAS_GEOJSON, driver="GeoJSON")
 

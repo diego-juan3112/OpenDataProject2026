@@ -55,14 +55,14 @@ de última actualización.
 **Asignado a:** Integrante 1 · **Fase:** 2 · **Estimación:** 0.5 día
 **Depende de:** ninguno 🟢 · **Bloquea a:** #3, #4, #5, #6
 
-**Descripción:** Preparar `data-engineering/`: `requirements.txt` del pipeline,
-estructura de scripts y convención `data/raw → interim → processed`. Formato de
+**Descripción:** Preparar `src/`: `requirements.txt` del pipeline, estructura de
+scripts y convención `data/01_raw → 02_intermediate → 03_primary`. Formato de
 intercambio final: Parquet.
 
 **Criterios de aceptación:**
-- [ ] `data-engineering/requirements.txt` con pandas, geopandas, pyarrow, etc.
-- [ ] README corto del flujo del pipeline en `data-engineering/`.
-- [ ] `.gitignore` confirmado: `data/raw|interim|processed` no se versionan.
+- [ ] `requirements.txt` (raíz) con pandas, geopandas, pyarrow, etc.
+- [ ] README corto del flujo del pipeline en `src/`.
+- [ ] `.gitignore` confirmado: `data/01_raw|02_intermediate|03_primary|04_model_output` no se versionan.
 
 ---
 
@@ -75,7 +75,7 @@ intercambio final: Parquet.
 violencia intrafamiliar, delitos sexuales, etc.) filtrado a Bogotá. Script reproducible.
 
 **Criterios de aceptación:**
-- [ ] `data-engineering/ingest_siedco.py` reproducible (descarga o lee de `data/raw/`).
+- [ ] `src/ingest_siedco.py` reproducible (descarga o lee de `data/01_raw/`).
 - [ ] Datos filtrados a Bogotá, con conteo de filas y rango de fechas reportados.
 - [ ] Columnas clave: fecha/hora, tipo de delito, código DANE / localidad, modalidad.
 
@@ -94,7 +94,7 @@ trae la ubicación exacta de cada llamada). Sostiene la **capa de densidad por U
 del mapa, no una capa de puntos.
 
 **Criterios de aceptación:**
-- [ ] `data-engineering/ingest_nuse.py` reproducible.
+- [ ] `src/ingest_nuse.py` reproducible.
 - [ ] Confirmado que el dato es agregado por localidad/UPZ (sin lat/lon por incidente) y documentado.
 - [ ] Conteo de llamadas por localidad, UPZ, mes y tipo, con tipos normalizados a categorías comparables con SIEDCO.
 
@@ -106,7 +106,7 @@ del mapa, no una capa de puntos.
 **Depende de:** #1, #2 · **Bloquea a:** #8, #21, #28, #35
 
 **Descripción:** Obtener códigos DIVIPOLA (DANE) y geometrías de Bogotá a nivel
-localidad en GeoJSON. **Exportar `data/processed/zonas_bogota.geojson`**: es el
+localidad en GeoJSON. **Exportar `data/03_primary/zonas_bogota.geojson`**: es el
 insumo geográfico que consumen la API y el dashboard.
 
 **Criterios de aceptación:**
@@ -175,7 +175,7 @@ delito)** con conteo de incidentes (SIEDCO y NUSE) + variables de contexto (pobl
 NBI). Desbloquea el modelado de Int. 2 (predictivo) e Int. 3 (clustering).
 
 **Criterios de aceptación:**
-- [ ] `data/processed/dataset_analitico.parquet` generado por `build_dataset.py` reproducible.
+- [ ] `data/03_primary/dataset_analitico.parquet` generado por `pipelines/pipeline_ml.py` reproducible.
 - [ ] Esquema documentado: claves (`cod_localidad`, `anio`, `tipo_delito`), features de contexto (`conteo_siedco`, `conteo_nuse`, `poblacion`, `ipm_nbi`) y marca `split`.
 - [ ] Split espacio-temporal marcado sin fuga: `train` = años ≤2024, `test` = 2025.
 - [ ] Notebook de ejemplo de carga + descripción de columnas entregado al equipo.
@@ -211,7 +211,7 @@ posibles sesgos de vigilancia (zonas con más registros por más policía, no m�
 delito real). Insumo para la auditoría de sesgo (#32).
 
 **Criterios de aceptación:**
-- [ ] `data-engineering/notebooks/eda_calidad.ipynb` con visualizaciones clave.
+- [ ] `notebooks/01_EDA_exploracion_datos.ipynb` con visualizaciones clave.
 - [ ] Al menos 2 limitaciones/sesgos potenciales identificados.
 - [ ] Nota escrita sobre sesgo de sobre-vigilancia para la auditoría de sesgo.
 

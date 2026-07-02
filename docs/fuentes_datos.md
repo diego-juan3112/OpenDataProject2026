@@ -8,15 +8,15 @@ contra las descripciones del portal). Todas son descargables por script desde
 
 | Fuente | Diccionario | Grano espacial | Grano temporal | Consumo | Estado |
 |---|---|---|---|---|---|
-| SIEDCO — Delito de Alto Impacto | [`siedco.md`](siedco.md) | Localidad (20) | **Anual** 2018–2025 | GeoJSON, portal Bogotá (federado en datos.gov.co) | ✅ |
-| NUSE — C4 / Línea 123 | [`nuse.md`](nuse.md) | Localidad + UPZ | Mensual 2015–2026 | CSV, portal Bogotá (federado en datos.gov.co) | ✅ |
-| Localidad — geometría | [`localidad.md`](localidad.md) | Localidad (20) | Estático | SHP, portal Bogotá | ✅ |
-| Policía Nacional — hurto / VIF | [`datosgov_policia.md`](datosgov_policia.md) | Municipio (Bogotá) | Diario→anual 2018–2025 | **API nativo de datos.gov.co (Socrata)** | ✅ |
-| Contexto DANE/SDP — población + IPM | [`dane_contexto.md`](dane_contexto.md) | Localidad (20) | Población anual 2018–2025 · IPM Censo 2018 | CSV + XLSX, portal Bogotá | ✅ |
+| SIEDCO — Delito de Alto Impacto | [`siedco.md`](data-dictionaries/siedco.md) | Localidad (20) | **Anual** 2018–2025 | GeoJSON, portal Bogotá (federado en datos.gov.co) | ✅ |
+| NUSE — C4 / Línea 123 | [`nuse.md`](data-dictionaries/nuse.md) | Localidad + UPZ | Mensual 2015–2026 | CSV, portal Bogotá (federado en datos.gov.co) | ✅ |
+| Localidad — geometría | [`localidad.md`](data-dictionaries/localidad.md) | Localidad (20) | Estático | SHP, portal Bogotá | ✅ |
+| Policía Nacional — hurto / VIF | [`datosgov_policia.md`](data-dictionaries/datosgov_policia.md) | Municipio (Bogotá) | Diario→anual 2018–2025 | **API nativo de datos.gov.co (Socrata)** | ✅ |
+| Contexto DANE/SDP — población + IPM | [`dane_contexto.md`](data-dictionaries/dane_contexto.md) | Localidad (20) | Población anual 2018–2025 · IPM Censo 2018 | CSV + XLSX, portal Bogotá | ✅ |
 
 **Limpieza y trazabilidad:** el reporte de calidad por fuente (filas originales →
 tras limpieza + razón de cada descarte) está en
-[`reporte_calidad.md`](reporte_calidad.md) (Issue #7).
+[`reporte_calidad.md`](data-dictionaries/reporte_calidad.md) (Issue #7).
 
 > **Sobre "Uso de datos abiertos" (criterio de 20 pts):** el proyecto consume
 > `datos.gov.co` de las dos formas: (1) datasets **catalogados/federados** ahí cuyo
@@ -49,13 +49,12 @@ Documentados también en la *Nota de validación de fuentes* de `CLAUDE.md` §1:
 ## Cómo se descargan / reproducen
 
 ```bash
-cd data-engineering
-python -m venv ../.venv && ../.venv/Scripts/pip install -r requirements.txt
-python ingest_siedco.py      # -> data/interim/siedco_delitos.parquet
-python ingest_nuse.py        # -> data/interim/nuse_incidentes.parquet  (descarga 112 MB)
-python ingest_divipola.py    # -> data/interim/localidades.geojson
-python ingest_datosgov.py    # -> data/interim/datosgov_policia.parquet (API datos.gov.co)
+python -m venv .venv && .venv/Scripts/pip install -r requirements.txt
+python src/ingest_siedco.py      # -> data/02_intermediate/siedco_delitos.parquet
+python src/ingest_nuse.py        # -> data/02_intermediate/nuse_incidentes.parquet  (descarga 112 MB)
+python src/ingest_divipola.py    # -> data/02_intermediate/localidades.geojson
+python src/ingest_datosgov.py    # -> data/02_intermediate/datosgov_policia.parquet (API datos.gov.co)
 ```
 
-Cada script es idempotente: si el archivo crudo ya existe en `data/raw/`, no lo
+Cada script es idempotente: si el archivo crudo ya existe en `data/01_raw/`, no lo
 vuelve a descargar (usar `--force` para re-descargar).

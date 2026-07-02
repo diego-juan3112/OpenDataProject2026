@@ -111,7 +111,7 @@ def clean_nuse() -> tuple[pd.DataFrame, list[dict]]:
 
 def _escribir_reporte(reportes: list[dict]) -> None:
     lines = ["# Reporte de calidad — limpieza consolidada (Issue #7)", "",
-             "Generado por `clean_normalize.py`. Filas negativas = descartes.", "",
+             "Generado por `src/data_cleaning.py`. Filas negativas = descartes.", "",
              "| Fuente | Paso | Δ filas | Razón |", "|---|---|---:|---|"]
     for r in reportes:
         lines.append(f"| {r['fuente']} | {r['paso']} | {r['filas']:+,} | {r['razon']} |")

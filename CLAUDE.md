@@ -323,9 +323,16 @@ OpenDataProject2026/
 ├── BACKLOG.md                # Issues por integrante
 ├── CRONOGRAMA.md             # Semanas, dependencias y sincronizaciones
 ├── DEFINITION_OF_DONE.md     # DoD a nivel proyecto
-├── docs/                     # BU/DU, diccionarios de datos, evaluación, monitoring
-├── data/                     # raw / interim / processed (gitignored)
-├── data-engineering/         # Pipeline + EDA (Integrante 1)
+├── LICENSE · Changelog.md    # Licencia MIT y registro de cambios
+├── requirements.txt          # Dependencias Python (environment.yml para Conda)
+├── docs/                     # Planteamiento, metodología, fuentes, diccionarios, validación
+├── data/                     # 01_raw / 02_intermediate / 03_primary / 04_model_output (gitignored)
+├── src/                      # Pipeline de datos: config, ingestas, limpieza, cruce (Integrante 1)
+├── pipelines/                # pipeline_ml.py — orquestador extremo a extremo (Integrante 1)
+├── notebooks/                # EDA y experimentación (scaffolds 01–05 + ejemplo)
+├── tests/                    # Calidad de datos e inferencia
+├── reports/                  # Figuras y reporte final
+├── RECURSOS/                 # Presentación y material visual de la entrega
 ├── models/
 │   ├── predictivo/           # RF/Gradient Boosting (Integrante 2)
 │   └── clustering/           # K-Means (Integrante 3)

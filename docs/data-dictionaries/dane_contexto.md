@@ -42,5 +42,5 @@ personales** (Regla 3; Ley 1581/2012).
 ## Reproducción
 
 ```bash
-python data-engineering/ingest_dane.py   # -> data/interim/dane_contexto.parquet
+python src/ingest_dane.py   # -> data/02_intermediate/dane_contexto.parquet
 ```

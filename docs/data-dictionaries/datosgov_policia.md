@@ -25,7 +25,7 @@
 | `cantidad` | Nº de casos del registro. |
 | `tipo_de_hurto`, `genero`, `grupo_etario`, `armas_medios` | Presentes en algunos datasets; no se usan (agregación por año). |
 
-## Salida normalizada (`data/interim/datosgov_policia.parquet`)
+## Salida normalizada (`data/02_intermediate/datosgov_policia.parquet`)
 
 | Columna | Tipo | Descripción |
 |---|---|---|

@@ -30,7 +30,7 @@
 > `COD_INCIDENTE/INCIDENTE` y omite `TIPO_DETALLE`, `COD_UPZ`, `UPZ`, que sí están
 > en el CSV real. Se documenta el CSV real, no el diccionario del portal.
 
-## Salida normalizada (`data/interim/nuse_incidentes.parquet`)
+## Salida normalizada (`data/02_intermediate/nuse_incidentes.parquet`)
 
 Recorte 2018–2025, 763.074 filas. Grano nativo (localidad × UPZ × año × mes × tipo).
 

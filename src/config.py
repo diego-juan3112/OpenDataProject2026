@@ -14,13 +14,14 @@ from pathlib import Path
 # --------------------------------------------------------------------------- #
 # Rutas del proyecto
 # --------------------------------------------------------------------------- #
-# config.py vive en data-engineering/ → la raíz del repo es el padre.
+# config.py vive en src/ → la raíz del repo es el padre.
 ROOT = Path(__file__).resolve().parent.parent
 
 DATA = ROOT / "data"
-RAW = DATA / "raw"
-INTERIM = DATA / "interim"
-PROCESSED = DATA / "processed"
+RAW = DATA / "01_raw"
+INTERIM = DATA / "02_intermediate"
+PROCESSED = DATA / "03_primary"
+MODEL_OUTPUT = DATA / "04_model_output"
 
 RAW_SIEDCO = RAW / "siedco"
 RAW_NUSE = RAW / "nuse"
@@ -37,7 +38,7 @@ DOCS_DICT = ROOT / "docs" / "data-dictionaries"
 
 def ensure_dirs() -> None:
     """Crea el árbol de carpetas de datos si no existe. Idempotente."""
-    for d in (RAW_SIEDCO, RAW_NUSE, RAW_LOCALIDAD, RAW_DANE, INTERIM, PROCESSED):
+    for d in (RAW_SIEDCO, RAW_NUSE, RAW_LOCALIDAD, RAW_DANE, INTERIM, PROCESSED, MODEL_OUTPUT):
         d.mkdir(parents=True, exist_ok=True)
 
 

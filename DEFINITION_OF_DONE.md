@@ -77,7 +77,7 @@ mapeada a los 6 criterios de evaluación de la convocatoria (`CLAUDE.md §6`).
 
 - [ ] Cada entregable mapeado a ≥1 criterio de evaluación (`CLAUDE.md §6`).
 - [ ] **Informe final consolidado** integra las secciones de los 4 + la sección compartida de evaluación de modelos (#12, #24, #35, #44).
-- [ ] Repositorio limpio: sin datasets pesados versionados, `.gitignore` respetado, READMEs por módulo (`data-engineering/`, `api/`, `app/`, `mobile/`).
+- [ ] Repositorio limpio: sin datasets pesados versionados, `.gitignore` respetado, READMEs por módulo (`src/`, `api/`, `app/`, `mobile/`).
 - [ ] Las 6 fases CRISP-ML(Q) tienen evidencia documentada (de Business Understanding a Monitoring).
 
 ---

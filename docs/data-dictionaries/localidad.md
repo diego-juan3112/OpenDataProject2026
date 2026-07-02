@@ -18,11 +18,11 @@
 | `SHAPE_Leng`, `SHAPE_Area` | float | Métricas de geometría |
 | `geometry` | Polygon | EPSG:4686 |
 
-## Salida normalizada (`data/interim/localidades.geojson`)
+## Salida normalizada (`data/02_intermediate/localidades.geojson`)
 
 Base geométrica de `zonas_bogota.geojson`. Reproyectada a **EPSG:4326** (WGS84)
 para consumo web (API / dashboard / móvil). El riesgo y el cluster se adjuntan
-después, en `build_dataset.py`, una vez existan los modelos.
+después, en `pipelines/pipeline_ml.py`, una vez existan los modelos.
 
 | Columna | Tipo | Descripción |
 |---|---|---|

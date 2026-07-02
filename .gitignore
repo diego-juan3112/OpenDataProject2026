@@ -1,7 +1,8 @@
 # --- Datos (no versionar datasets crudos/pesados) ---
-data/raw/*
-data/interim/*
-data/processed/*
+data/01_raw/*
+data/02_intermediate/*
+data/03_primary/*
+data/04_model_output/*
 !data/**/.gitkeep
 *.csv
 *.xlsx
@@ -14,6 +15,7 @@ data/processed/*
 # --- Modelos serializados ---
 *.joblib
 *.pkl
+models/*.pkl
 models/**/*.joblib
 models/**/*.pkl
 

@@ -34,7 +34,7 @@ coordenada-punto del hecho. Por la naturaleza del dato, el mapa se compone en ca
 | Capa | Fuente | Representación |
 |---|---|---|
 | **Coroplético** (fondo estadístico oficial) | SIEDCO | Polígonos por localidad coloreados por riesgo |
-| **Puntos / densidad** (lo más cercano a "tiempo real") | NUSE / Línea 123 | Puntos donde haya georreferenciación fina |
+| **Densidad por UPZ** (señal operativa complementaria) | NUSE / Línea 123 | Agregado por UPZ × mes × tipo (el dato abierto no trae lat/lon por incidente) |
 | **Reportes ciudadanos** | App (simulado, en sesión) | Puntos individuales sobre las capas anteriores |
 
 ### Alcance
@@ -70,9 +70,15 @@ OpenDataProject2026/
 ├── BACKLOG.md                # Issues por integrante
 ├── CRONOGRAMA.md             # Semanas, dependencias y sincronizaciones
 ├── DEFINITION_OF_DONE.md     # DoD a nivel proyecto
-├── docs/                     # BU/DU, diccionarios, evaluación, monitoring
-├── data/                     # raw / interim / processed (gitignored)
-├── data-engineering/         # Integrante 1 — pipeline + EDA
+├── requirements.txt          # Dependencias Python (environment.yml para Conda)
+├── docs/                     # Planteamiento, metodología, fuentes, diccionarios, validación
+├── data/                     # 01_raw / 02_intermediate / 03_primary / 04_model_output (gitignored)
+├── src/                      # Integrante 1 — pipeline: config, ingestas, limpieza, cruce
+├── pipelines/                # Integrante 1 — pipeline_ml.py (orquestador extremo a extremo)
+├── notebooks/                # EDA y experimentación
+├── tests/                    # Calidad de datos e inferencia
+├── reports/                  # Figuras y reporte final
+├── RECURSOS/                 # Presentación y material visual
 ├── models/
 │   ├── predictivo/           # Integrante 2 — RF/Gradient Boosting
 │   └── clustering/           # Integrante 3 — K-Means (tipología de zonas)
@@ -98,10 +104,10 @@ pip install -r requirements.txt
 
 ### 1) Pipeline de datos (Integrante 1)
 
-Genera `data/processed/dataset_analitico.parquet` y `data/processed/zonas_bogota.geojson`.
+Genera `data/03_primary/dataset_analitico.parquet` y `data/03_primary/zonas_bogota.geojson`.
 
 ```bash
-python data-engineering/build_dataset.py
+python pipelines/pipeline_ml.py
 ```
 
 ### 2) Entrenar modelos (Integrantes 2 y 3)

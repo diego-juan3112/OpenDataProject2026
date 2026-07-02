@@ -41,7 +41,7 @@ caracteres de nombre de campo tipo shapefile).
 Años disponibles por tipo: `18`–`26` (se usan 2018–2025). Columnas derivadas
 `*VAR` (variación %) y `*TOTAL` (total ciudad, **no** por localidad) se descartan.
 
-## Salida normalizada (`data/interim/siedco_delitos.parquet`)
+## Salida normalizada (`data/02_intermediate/siedco_delitos.parquet`)
 
 Formato **largo**, 1.760 filas = 20 localidades × 11 tipos × 8 años.
 
