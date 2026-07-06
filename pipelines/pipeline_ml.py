@@ -28,12 +28,14 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 import config
 import data_cleaning
+import feature_engineering
 import pipeline_integration
 
 # Columnas finales del dataset analítico (contrato con Integrantes 2 y 3).
+# `riesgo_alto` es la variable objetivo del predictivo (Issue #10).
 COLS_FINAL = [
     "cod_localidad", "localidad_nombre", "anio", "tipo_delito", "tipo_delito_nombre",
-    "conteo_siedco", "conteo_nuse", "poblacion", "ipm_nbi", "split",
+    "conteo_siedco", "conteo_nuse", "poblacion", "ipm_nbi", "split", "riesgo_alto",
 ]
 
 
@@ -71,9 +73,10 @@ def run() -> pd.DataFrame:
     # 2) Cruce por código + validación.
     pipeline_integration.run()
 
-    # 3) Tabla analítica + split.
+    # 3) Tabla analítica + split + variable objetivo (Issue #10).
     df = pipeline_integration.tabla_analitica().rename(columns={"ipm_pct": "ipm_nbi"})
     df = _marcar_split(df)
+    df, _umbrales = feature_engineering.add_target_riesgo_alto(df)
     df = df[COLS_FINAL].sort_values(["cod_localidad", "anio", "tipo_delito"]).reset_index(drop=True)
 
     # 4) Escritura de salidas finales.
@@ -102,6 +105,9 @@ def _verificar(df: pd.DataFrame, zonas) -> None:
     print(f"  test  años: {sorted(df.loc[df.split=='test','anio'].unique())}")
     ipm_nulos = sorted(df.loc[df['ipm_nbi'].isna(), 'cod_localidad'].unique())
     print(f"  ipm_nbi nulo (Sumapaz sin EM, documentado): {ipm_nulos}")
+    ra_tr = df.loc[df.split == 'train', 'riesgo_alto']
+    print(f"  riesgo_alto (train) — objetivo #10: {ra_tr.value_counts().to_dict()} "
+          f"({ra_tr.mean()*100:.1f}% clase 1)")
     print(f"  zonas_bogota.geojson: {len(zonas)} polígonos | CRS {zonas.crs}")
     assert len(zonas) == 20 and zonas.crs.to_epsg() == 4326
     print(f"\n  [ok] {config.DATASET_ANALITICO}")

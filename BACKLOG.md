@@ -402,6 +402,123 @@ comentario de validación.
 
 ---
 
+## 🧭 Feature: Ruta Más Segura — issues de API (Int. 2)
+
+> Feature nueva sobre el mismo modelo/datos: la app pide dos rutas alternativas
+> a OpenRouteService y la API las evalúa por el riesgo de las localidades que
+> atraviesan. Diseño técnico completo (arquitectura, código de referencia,
+> esquema del endpoint) en `diseño_tecnico_ruta_segura.md`. No reproducir el
+> código aquí: citar la sección correspondiente del diseño.
+
+### [PRED] #45 — Setup ORS: API key, wrapper y prueba de conectividad 🟢
+
+**Asignado a:** Integrante 2 · **Fase:** 5 · **Estimación:** 0.5 día
+**Depende de:** ninguno 🟢 · **Bloquea a:** #46, #47
+
+**Descripción:** Crear cuenta en OpenRouteService, obtener API key, añadirla al
+`.env` del proyecto y escribir la función `get_routes()` en
+`src/routing_client.py`. Verificar con un request de prueba entre dos puntos
+conocidos de Bogotá que ORS devuelve rutas válidas. Documentar los límites del
+plan gratuito en `docs/architecture.md`. Código de referencia:
+`diseño_tecnico_ruta_segura.md` §PARTE 2.
+
+**Criterios de aceptación:**
+- [ ] `ORS_API_KEY` en `.env` (nunca commiteada — verificar `.gitignore`).
+- [ ] `src/routing_client.py` con `get_routes(origen_lon, origen_lat, destino_lon, destino_lat)` implementado.
+- [ ] Test manual: request entre Chapinero y La Candelaria devuelve 2 rutas con `summary.distance` y `summary.duration` válidos.
+- [ ] Límites del plan gratuito documentados en `docs/architecture.md`.
+- [ ] `polyline` añadido a `requirements.txt`.
+
+**Notas técnicas:** Instalar `openrouteservice` y `polyline`. ORS usa `[lon, lat]`,
+no al revés (error frecuente: invertir coordenadas). Endpoint
+`POST /v2/directions/{profile}/json`; perfil recomendado para demo `driving-car`.
+
+---
+
+### [PRED] #46 — Función de score de riesgo por localidad
+
+**Asignado a:** Integrante 2 · **Fase:** 3 · **Estimación:** 0.5 día
+**Depende de:** #9 · **Bloquea a:** #47
+
+**Descripción:** Implementar `calcular_scores_localidad()` en
+`src/model_evaluation.py`. Lee el dataset analítico, aplica pesos por gravedad de
+delito y devuelve un diccionario `{cod_localidad: score_0_a_10}` usando datos de
+2024 (último año de entrenamiento). Acordar con el equipo si los pesos por tipo
+de delito son razonables y documentar la decisión. Código de referencia:
+`diseño_tecnico_ruta_segura.md` §PARTE 3, Paso 1.
+
+**Criterios de aceptación:**
+- [ ] Función implementada; devuelve dict con exactamente 20 claves (01–20).
+- [ ] Scores en rango 0–10, con al menos 3 niveles distintos (no todos iguales).
+- [ ] Test: localidades conocidas como problemáticas (Kennedy, Los Mártires) tienen score > 6.
+- [ ] Pesos por tipo de delito documentados con justificación en el código.
+- [ ] Sumapaz (cod 20) tiene score calculable (`ipm_nbi` nulo no afecta este cálculo).
+
+**Notas técnicas:** Los pesos del diseño son un punto de partida ajustable; lo
+importante es que estén documentados y sean defendibles. Considerar normalizar
+también por población para no sesgar hacia localidades grandes.
+
+---
+
+### [PRED] #47 — Spatial join: qué localidades cruza una ruta
+
+**Asignado a:** Integrante 2 · **Fase:** 5 · **Estimación:** 0.5 día
+**Depende de:** #45, #46, #5 · **Bloquea a:** #48
+
+**Descripción:** Implementar `decodificar_ruta()` y `localidades_de_ruta()` en
+`src/routing_client.py`. La primera decodifica la polyline de ORS a puntos
+geográficos; la segunda hace el spatial join con los polígonos de localidad
+(`zonas_bogota.geojson`, #5) para saber por cuáles pasa la ruta. Verificar con
+una ruta conocida que el resultado tiene sentido geográfico. Código de
+referencia: `diseño_tecnico_ruta_segura.md` §PARTE 3, Pasos 2–3.
+
+**Criterios de aceptación:**
+- [ ] `decodificar_ruta()` devuelve GeoDataFrame en EPSG:4326 con puntos cada ~200 m.
+- [ ] `localidades_de_ruta()` devuelve lista de `cod_localidad` en orden de aparición, sin duplicados.
+- [ ] Test: ruta Chapinero → Santa Fe devuelve secuencia de localidades geográficamente coherente.
+- [ ] Puntos fuera de Bogotá (ruta que sale del bounding box) no generan error — se filtran.
+- [ ] Spatial join < 500 ms para rutas típicas de Bogotá.
+
+**Notas técnicas:** `gpd.sjoin(..., predicate="within")`; usar `"intersects"` como
+fallback si un punto cae en el borde de dos localidades. Samplear cada 200 m en
+vez de usar todos los puntos de la polyline para mantener la performance.
+
+---
+
+### [PRED] #48 — Endpoint `POST /ruta-segura` completo 🎯🤝
+
+**Asignado a:** Integrante 2 · **Fase:** 5 · **Estimación:** 1 día
+**Depende de:** #45, #46, #47 · **Bloquea a:** #50 — **SYNC-R (ver nota al cierre de la sección)**
+
+**Descripción:** Implementar el endpoint completo `POST /ruta-segura` en
+`api/routers/routing.py` siguiendo el esquema request/response del diseño.
+Incluir validación de coordenadas (dentro del bounding box de Bogotá), manejo de
+errores de ORS y el startup hook que pre-carga scores y GeoDataFrame en
+`app.state`. Código de referencia: `diseño_tecnico_ruta_segura.md` §PARTE 4–5.
+
+**Criterios de aceptación:**
+- [ ] `POST /ruta-segura` devuelve el response JSON del esquema definido.
+- [ ] Validación: coordenadas fuera de Bogotá devuelven HTTP 422 con mensaje claro.
+- [ ] Error de ORS devuelve HTTP 502 con mensaje útil (no stack trace).
+- [ ] Sin ruta posible devuelve HTTP 404.
+- [ ] Scores y zonas cargados en startup — no en cada request.
+- [ ] Tiempo de respuesta end-to-end < 3 s en condiciones normales.
+- [ ] Probado manualmente con Swagger UI (`/docs`) antes de entregarlo a Int. 4.
+
+**Notas técnicas:** Incluir `routing.router` en `api/main.py`. La advertencia de
+zona de riesgo alto en el origen es opcional para el MVP. El campo
+`geometry_geojson` del response debe ser un dict Python (no string JSON) para que
+FastAPI lo serialice correctamente.
+
+---
+
+> **SYNC-R: Entrega del endpoint `/ruta-segura`** 🤝
+> Al terminar la issue #48, Integrante 2 entrega a Integrante 4 la URL del
+> endpoint con un ejemplo de request/response funcionando en Swagger UI
+> (`/docs`). Sin esa entrega, la issue #50 no puede completarse.
+
+---
+
 # 🟨 INTEGRANTE 3 — CLUSTERING + DASHBOARD (Fase 3b + 5)
 
 ### [CLUST] #25 — EDA para perfilado de zonas (en paralelo) 🟢
@@ -734,14 +851,113 @@ la sección compartida de evaluación.
 
 ---
 
+## 🧭 Feature: Ruta Más Segura — issues de app móvil (Int. 4)
+
+> Cliente móvil de la feature Ruta Más Segura: buscar destino, pedir rutas al
+> endpoint `POST /ruta-segura` (Int. 2, #48) y compararlas por riesgo en el mapa.
+> Diseño técnico y código base de la pantalla en `diseño_tecnico_ruta_segura.md`
+> §PARTE 6.
+
+### [APP] #49 — Pantalla de búsqueda de destino
+
+**Asignado a:** Integrante 4 · **Fase:** 5 · **Estimación:** 0.5 día
+**Depende de:** #37 · **Bloquea a:** #50
+
+**Descripción:** Crear la pantalla `RutaSeguraScreen` con un campo de búsqueda de
+texto (geocoding) y la opción de marcar el destino con long-press en el mapa.
+Para el geocoding (convertir "Carrera 7 con 32" a coordenadas) usar la API de
+geocoding de ORS (Pelias) — misma API key, sin costo adicional. Código de
+referencia: `diseño_tecnico_ruta_segura.md` §PARTE 6.
+
+**Criterios de aceptación:**
+- [ ] Campo de texto que acepta dirección o nombre de lugar.
+- [ ] Request a ORS Geocoding devuelve coordenadas del lugar buscado.
+- [ ] Marcador azul en el mapa cuando el destino está seleccionado.
+- [ ] Long-press en el mapa también establece el destino.
+- [ ] Botón "Calcular ruta segura" visible solo cuando hay destino seleccionado.
+- [ ] Estado de carga visible mientras se espera la respuesta.
+
+**Notas técnicas:** Endpoint de geocoding
+`GET https://api.openrouteservice.org/geocode/search?text=...&boundary.country=CO`
+(añadir `boundary.country=CO` para limitar a Colombia). Si el geocoding resulta
+complejo, el MVP puede ser solo el long-press en el mapa — documentar como
+simplificación si se toma esa decisión.
+
+---
+
+### [APP] #50 — Integración del endpoint y visualización de rutas 🤝
+
+**Asignado a:** Integrante 4 · **Fase:** 5 · **Estimación:** 1 día
+**Depende de:** #48, #49 · **Bloquea a:** #51
+
+**Descripción:** Conectar `RutaSeguraScreen` con el endpoint `POST /ruta-segura`.
+Mostrar ambas rutas en el mapa con colores distintos (verde = segura, rojo =
+rápida) y el panel de comparativa debajo del mapa con la información de cada ruta.
+Código de referencia: `diseño_tecnico_ruta_segura.md` §PARTE 6.
+
+**Criterios de aceptación:**
+- [ ] Request al endpoint con origen (GPS actual) y destino seleccionado.
+- [ ] Dos Polylines en el mapa con colores según nivel de riesgo.
+- [ ] La ruta recomendada (segura) aparece más gruesa o resaltada por defecto.
+- [ ] Panel con tiempo, distancia, nivel de riesgo y localidades de cada ruta.
+- [ ] Tap en una ruta (mapa o panel) la selecciona/resalta.
+- [ ] Advertencia visible si el origen está en zona de riesgo alto.
+- [ ] Estado de error visible si el endpoint falla (mensaje amigable, no crash).
+
+**Notas técnicas:** La `geometry_geojson` viene como
+`{type: "LineString", coordinates: [[lon, lat], ...]}`; React Native Maps usa
+`{latitude, longitude}`, así que hay que mapear
+`coords.map(([lon, lat]) => ({ latitude: lat, longitude: lon }))`. Colores:
+BAJO=#17D05B, MEDIO=#F5A623, ALTO=#E05252 (consistentes con el resto de la app).
+
+---
+
+### [APP] #51 — Modo demo de ruta segura para la presentación 🎯
+
+**Asignado a:** Integrante 4 · **Fase:** 5 · **Estimación:** 0.25 día
+**Depende de:** #50 · **Bloquea a:** ninguno
+
+**Descripción:** Añadir un "modo demo" para la presentación al jurado que
+pre-carga un escenario guionizado: origen en Chapinero (zona media), destino en
+Plaza de Bolívar, con las dos rutas ya calculadas. Garantiza que la demo funciona
+aunque el GPS del dispositivo no coopere o la red sea lenta en el evento. Código
+de referencia: `diseño_tecnico_ruta_segura.md` §PARTE 6.
+
+**Criterios de aceptación:**
+- [ ] Un botón oculto (triple tap en el logo o botón discreto en Settings) activa el modo demo.
+- [ ] Modo demo muestra el escenario Chapinero → Plaza de Bolívar con rutas pre-calculadas.
+- [ ] La ruta segura (verde) pasa visiblemente por zonas distintas a la rápida (roja).
+- [ ] El modo demo es indistinguible visualmente del modo real para el jurado.
+- [ ] Documentado en `docs/validacion_guide.md` cómo activarlo.
+
+**Notas técnicas:** Guardar el response JSON del modo demo como constante en el
+código (`DEMO_RUTA_RESPONSE = {...}`). Con el modo demo activo, en vez de hacer el
+fetch al endpoint, devolver ese JSON directamente. Así la demo no depende de red
+ni de GPS.
+
+---
+
+## 🔗 Dependencias de la feature Ruta Más Segura
+
+```
+Int. 2:  #45 → #46 → #47 → #48 ─┐
+                                 ├─► #50 → #51
+Int. 4:              #49 ────────┘
+```
+
+`#48` es el punto de sincronización **SYNC-R**: sin el endpoint entregado en
+Swagger UI, `#50` (integración en el móvil) no puede completarse.
+
+---
+
 ## Resumen de carga por integrante
 
 | Integrante | Issues | Estimación aprox. |
 |---|---|---|
 | 1 — Datos | #1–#12 (12 issues) | ~13 días-persona (ruta crítica, front-loaded) |
-| 2 — Predictivo + API | #13–#24 (12 issues) | ~12.5 días-persona |
+| 2 — Predictivo + API | #13–#24, #45–#48 (16 issues) | ~15 días-persona (+2.5 por Ruta Más Segura) |
 | 3 — Clustering + Dashboard | #25–#36 (12 issues) | ~12.5 días-persona |
-| 4 — App móvil | #37–#44 (8 issues) | ~11.5 días-persona (móvil es el frente de mayor riesgo) |
+| 4 — App móvil | #37–#44, #49–#51 (11 issues) | ~13.25 días-persona (móvil es el frente de mayor riesgo; +1.75 por Ruta Más Segura) |
 
 > Int. 1 es la ruta crítica: hasta que exista el dataset unificado (#9), los demás
 > trabajan con datos crudos o mocks. La app móvil se reparte entre Int. 2 (API +

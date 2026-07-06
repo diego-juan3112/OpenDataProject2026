@@ -9,5 +9,9 @@ shapely==2.1.2
 numpy==2.5.0
 requests==2.34.2
 tqdm==4.68.3
-openpyxl==3.1.5 
+openpyxl==3.1.5
 pytest         # por si alguna fuente futura llega en .xlsx
+
+# EDA / notebooks (Issue #11 — EDA de calidad + nota de sesgo)
+matplotlib==3.11.0
+seaborn==0.13.2
