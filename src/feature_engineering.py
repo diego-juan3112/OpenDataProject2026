@@ -57,6 +57,71 @@ def add_target_riesgo_alto(
     return df, umbrales
 
 
+def construir_features_zona(
+    df: pd.DataFrame,
+    split_col: str = "split",
+    train_value: str = "train",
+) -> pd.DataFrame:
+    """Matriz localidad x features estandarizada para el clustering (Issue #26).
+
+    Usa SOLO `split == train_value` (sin fuga): tasa anual promedio por 100.000
+    habitantes por tipo de delito, tasa de llamadas NUSE por 100.000 hab., y
+    contexto socioeconomico (`ipm_nbi`). Sumapaz (unica localidad con `ipm_nbi`
+    nulo) se imputa con la mediana de las demas localidades -- imputacion
+    documentada, no en silencio; ver `docs/data-dictionaries/features_clustering.md`.
+    La decision final de como tratar a Sumapaz en el clustering (incluir con
+    este valor imputado, excluir, o cluster propio) queda para la Issue #27.
+
+    Devuelve la matriz ya estandarizada (z-score, ddof=0, media 0 / desviacion 1
+    por columna), indexada por `cod_localidad`, lista para `KMeans.fit(...)`.
+    """
+    train = df[df[split_col] == train_value].copy()
+
+    train["tasa_anual"] = train["conteo_siedco"] / train["poblacion"] * 100000
+    tasa_tipo = train.pivot_table(index="cod_localidad", columns="tipo_delito",
+                                   values="tasa_anual", aggfunc="mean")
+    tasa_tipo.columns = [f"tasa_{c}" for c in tasa_tipo.columns]
+
+    # conteo_nuse/poblacion vienen repetidos por tipo dentro de una misma
+    # localidad-anio (es una senal de zona-anio, no de zona-tipo); se deduplica
+    # antes de promediar para no contar el mismo anio 11 veces.
+    nuse = (train.drop_duplicates(subset=["cod_localidad", "anio"])
+                 .assign(tasa_nuse_anual=lambda d: d["conteo_nuse"] / d["poblacion"] * 100000)
+                 .groupby("cod_localidad")["tasa_nuse_anual"].mean()
+                 .rename("tasa_nuse"))
+
+    ipm = (train.drop_duplicates(subset=["cod_localidad"])
+                .set_index("cod_localidad")["ipm_nbi"])
+    ipm = ipm.fillna(ipm.median())
+
+    features = tasa_tipo.join(nuse).join(ipm.rename("ipm_nbi"))
+    return (features - features.mean()) / features.std(ddof=0)
+
+
+def calcular_linea_base(
+    df: pd.DataFrame,
+    split_col: str = "split",
+    train_value: str = "train",
+) -> pd.DataFrame:
+    """Linea base historica (media/desviacion) por localidad-tipo (Issue #26).
+
+    Usa SOLO `split == train_value` (sin fuga). Media y desviacion estandar
+    muestral (`ddof=1`) de `conteo_siedco` sobre los anios de entrenamiento,
+    por (`cod_localidad`, `tipo_delito`). Es el insumo directo de `flag_zscore`
+    (Issue #36): dado un conteo reciente para una localidad-tipo, #36 calculara
+    `z = (conteo_reciente - media) / desviacion`. Esta funcion NO calcula ese
+    z-score, solo produce la linea base contra la que se comparara.
+
+    Algunas combinaciones (p. ej. Sumapaz en tipos de conteo casi nulo) pueden
+    tener `desviacion == 0` si los 7 conteos anuales son identicos -- no se
+    corrige aqui; documentado para que #36 evite dividir por cero.
+    """
+    train = df[df[split_col] == train_value]
+    return (train.groupby(["cod_localidad", "tipo_delito"])["conteo_siedco"]
+                 .agg(media="mean", desviacion=lambda s: s.std(ddof=1))
+                 .reset_index())
+
+
 if __name__ == "__main__":
     import config
 

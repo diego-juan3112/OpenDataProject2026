@@ -544,9 +544,9 @@ FastAPI lo serialice correctamente.
 delito** (sobre los conteos anuales) que usará el flag z-score (#36).
 
 **Criterios de aceptación:**
-- [ ] Matriz localidad × features estandarizada y documentada.
-- [ ] Línea base (media + desviación) por localidad–tipo de delito, calculada con los conteos anuales del histórico, y guardada.
-- [ ] Sin fuga: la línea base solo usa histórico, no el reporte que se evaluará.
+- [x] Matriz localidad × features estandarizada y documentada.
+- [x] Línea base (media + desviación) por localidad–tipo de delito, calculada con los conteos anuales del histórico, y guardada.
+- [x] Sin fuga: la línea base solo usa histórico, no el reporte que se evaluará.
 
 ---
 
