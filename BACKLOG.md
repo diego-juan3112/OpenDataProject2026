@@ -527,9 +527,9 @@ FastAPI lo serialice correctamente.
 **Depende de:** ninguno (usa crudos de #3/#4) · **Bloquea a:** ninguno
 
 **Criterios de aceptación:**
-- [ ] Notebook con perfiles delictivos por localidad (proporción de cada tipo de delito).
-- [ ] Tendencia por año identificada (¿sube o baja cada tipo de delito por localidad?).
-- [ ] Hipótesis preliminar de cuántos perfiles distintos podrían existir.
+- [x] Notebook con perfiles delictivos por localidad (proporción de cada tipo de delito).
+- [x] Tendencia por año identificada (¿sube o baja cada tipo de delito por localidad?).
+- [x] Hipótesis preliminar de cuántos perfiles distintos podrían existir.
 
 ---
 

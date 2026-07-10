@@ -356,3 +356,88 @@ La **Fase 4 (QA)** es cruzada y se consolida en una **sección compartida de
 evaluación** del informe: cada responsable reporta sus métricas y un compañero deja
 un comentario corto de validación. Ver `BACKLOG.md` (issues) y `CRONOGRAMA.md`
 (plan semanal y puntos de sincronización).
+
+---
+
+## 10. Guía operativa para agentes de código
+
+### Estado real de implementación (no confundir con la arquitectura objetivo de §4)
+
+- **Completo:** `src/` (ingestas, limpieza, cruce) + `pipelines/pipeline_ml.py` —
+  Issues #1–#12 (Integrante 1). El handoff detallado está en
+  `docs/HANDOFF_INT1.md` (contrato de columnas, decisiones pendientes, sesgos
+  identificados en los datos — léelo antes de tocar el dataset analítico).
+- **Scaffold / placeholder:** `src/feature_engineering.py` (solo expone la
+  variable objetivo `riesgo_alto`), `src/model_training.py`,
+  `src/model_evaluation.py`, la mayoría de `notebooks/*` (excepto el EDA #11 y
+  `ejemplo_dataset_analitico.ipynb`), y la mayoría de `docs/*.md` fuera de
+  `fuentes_datos.md`, `data_dictionary.md` y `data-dictionaries/`.
+- **No existen aún en disco:** `api/`, `app/`, `mobile/`,
+  `models/predictivo/`, `models/clustering/`. Los comandos de `README.md` para
+  esas piezas (`uvicorn`, `streamlit run`, `expo start`) documentan el plan de
+  arquitectura, no algo ejecutable hoy — verifica con `ls`/`Glob` antes de
+  asumir que un archivo de esas carpetas existe.
+- `tests/` está vacío (solo `.gitkeep`) pero `.github/workflows/ci.yml` corre
+  `pytest tests/ -v`; cualquier trabajo en `src/`/`pipelines/` debería venir
+  con sus pruebas en `tests/`.
+- `CRONOGRAMA.md` se referencia desde README/BACKLOG pero no existe en el
+  repo (ver nota de seguimiento en `ESTRUCTURA.md` §5).
+
+### Comandos
+
+```bash
+# Entorno (una vez, desde la raíz). Alternativa Conda: environment.yml
+python -m venv .venv
+.venv/Scripts/pip install -r requirements.txt     # Windows
+# source .venv/bin/activate && pip install -r requirements.txt   # Unix
+
+# Ingesta de fuentes crudas (idempotente; usar --force para re-descargar).
+# NUSE descarga ~112 MB.
+python src/ingest_siedco.py
+python src/ingest_nuse.py
+python src/ingest_divipola.py
+python src/ingest_datosgov.py
+python src/ingest_dane.py
+
+# Pipeline completo -> data/03_primary/{dataset_analitico.parquet, zonas_bogota.geojson}
+python pipelines/pipeline_ml.py
+
+# Lo que corre CI (.github/workflows/ci.yml)
+python -m compileall src pipelines tests
+pytest tests/ -v
+```
+
+No hay linter/formatter configurado (no hay `ruff`, `flake8` ni `black` en
+`requirements.txt` ni en CI).
+
+### Arquitectura del pipeline de datos (leer antes de tocar `src/`)
+
+- `src/config.py` es la única fuente de verdad de rutas, URLs CKAN, CRS y la
+  llave de cruce (`cod_localidad`, string de 2 dígitos con cero a la
+  izquierda). No hardcodear rutas ni URLs en otro módulo.
+- Los datos fluyen por capas numeradas — `data/01_raw` → `02_intermediate` →
+  `03_primary` → `04_model_output` — ninguna versionada en git (solo
+  `.gitkeep`); hay que regenerarlas corriendo el pipeline.
+- El cruce entre fuentes es siempre **tabular** (no spatial join: NUSE no trae
+  lat/lon por incidente) y siempre por `cod_localidad`, nunca por nombre de
+  texto (los nombres de SIEDCO vienen con mojibake latin-1; el nombre
+  canónico sale de la geometría en `ingest_divipola.py`).
+- `src/pipeline_integration.py`: SIEDCO es la *spine* (1.760 filas = 20
+  localidades × 8 años × 11 tipos de delito); NUSE y el contexto DANE se
+  pegan con left join por (`cod_localidad`, `anio`). Una combinación
+  localidad-año ausente en NUSE es un **cero estructural**, no un dato
+  faltante.
+- `pipelines/pipeline_ml.py` orquesta `data_cleaning.run()` →
+  `pipeline_integration.run()` → `feature_engineering.add_target_riesgo_alto()`
+  → split espacio-temporal (`train` = años ≤2024, `test` = 2025) → escribe y
+  **verifica** (asserts) los dos entregables. `COLS_FINAL` en ese archivo es
+  el contrato de columnas con Integrantes 2 y 3 — cambiarlo rompe aguas
+  abajo.
+- La variable objetivo `riesgo_alto` (percentil 75 de `conteo_siedco` por
+  tipo de delito, umbral aprendido **solo** con `train`) ya viene calculada
+  en `dataset_analitico.parquet`; no se recalcula en otros módulos (ver
+  `src/feature_engineering.py`).
+- `Sumapaz` (`cod_localidad` = `"20"`) tiene `ipm_nbi` nulo (sin Encuesta
+  Multipropósito). Es una decisión abierta para quien consuma el dataset
+  (imputar vs. excluir) — documentada en
+  `docs/data-dictionaries/variable_objetivo.md` y `docs/HANDOFF_INT1.md`.
