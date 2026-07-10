@@ -16,3 +16,5 @@ pytest         # por si alguna fuente futura llega en .xlsx
 matplotlib==3.11.0
 seaborn==0.13.2
 scipy==1.18.0          # EDA/#25 — regresión de tendencia (linregress) + dendrograma jerárquico
+scikit-learn==1.9.0    # #27 — K-Means + silhouette para el clustering de perfiles de zona
+joblib==1.5.3          # #27 — serializar clusters.joblib
