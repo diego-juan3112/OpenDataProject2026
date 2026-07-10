@@ -560,10 +560,10 @@ codo + silhouette, **caracterizar e interpretar** cada cluster como tipología
 accionable y serializar.
 
 **Criterios de aceptación:**
-- [ ] Curva de codo + silhouette para un rango de k; k final justificado.
-- [ ] Cada zona asignada a un cluster; parámetros (k, n_init, random_state) reproducibles.
-- [ ] Tabla de perfiles por cluster con **nombre interpretable** ("perfil hurto-alto", "perfil violencia-intrafamiliar", etc.) + lectura accionable (1 párrafo por perfil).
-- [ ] `models/clustering/clusters.joblib` + `models/clustering/zona_cluster.parquet` (zona, cluster, nombre_perfil) para la API y el dashboard.
+- [x] Curva de codo + silhouette para un rango de k; k final justificado.
+- [x] Cada zona asignada a un cluster; parámetros (k, n_init, random_state) reproducibles.
+- [x] Tabla de perfiles por cluster con **nombre interpretable** ("perfil hurto-alto", "perfil violencia-intrafamiliar", etc.) + lectura accionable (1 párrafo por perfil).
+- [x] `models/clustering/clusters.joblib` + `models/clustering/zona_cluster.parquet` (zona, cluster, nombre_perfil) para la API y el dashboard.
 
 ---
 
