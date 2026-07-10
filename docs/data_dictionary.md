@@ -51,4 +51,5 @@ Integrante 3 (clustering/dashboard). El diccionario por fuente de origen está e
 | Contexto DANE/SDP (población + IPM) | [`data-dictionaries/dane_contexto.md`](data-dictionaries/dane_contexto.md) |
 | Variable objetivo `riesgo_alto` (#10) | [`data-dictionaries/variable_objetivo.md`](data-dictionaries/variable_objetivo.md) |
 | Features de zona + línea base z-score (#26) | [`data-dictionaries/features_clustering.md`](data-dictionaries/features_clustering.md) |
+| Tipología de perfiles de zona — K-Means (#27) | [`data-dictionaries/clustering_perfiles.md`](data-dictionaries/clustering_perfiles.md) |
 | Reporte de calidad (Issue #7) | [`data-dictionaries/reporte_calidad.md`](data-dictionaries/reporte_calidad.md) |
