@@ -13,7 +13,11 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from feature_engineering import construir_features_zona, calcular_linea_base
+from feature_engineering import (
+    construir_features_zona,
+    calcular_linea_base,
+    conteo_total_por_zona,
+)
 
 
 def _df_sintetico(incluir_test: bool = False) -> pd.DataFrame:
@@ -97,3 +101,25 @@ def test_sin_fuga_solo_usa_train():
     base_sin = calcular_linea_base(df_sin_test)
     base_con = calcular_linea_base(df_con_test)
     pd.testing.assert_frame_equal(base_sin, base_con)
+
+
+def test_conteo_total_por_zona_suma_solo_train():
+    df = _df_sintetico()
+    conteo = conteo_total_por_zona(df)
+
+    # "01": tipo A = 10*7=70, tipo B = 1+2+3+4+5+6+7=28 -> 98
+    # "02": tipo A = 5+15+25+5+15+25+5=95, tipo B = 20*7=140 -> 235
+    # "03": tipo A = 3+6+9+3+6+9+3=39, tipo B = 50+40+30+50+40+30+50=290 -> 329
+    assert conteo.loc["01"] == 98
+    assert conteo.loc["02"] == 235
+    assert conteo.loc["03"] == 329
+    assert conteo.name == "conteo_total"
+
+
+def test_conteo_total_por_zona_sin_fuga():
+    df_sin_test = _df_sintetico(incluir_test=False)
+    df_con_test = _df_sintetico(incluir_test=True)
+
+    conteo_sin = conteo_total_por_zona(df_sin_test)
+    conteo_con = conteo_total_por_zona(df_con_test)
+    pd.testing.assert_series_equal(conteo_sin, conteo_con)

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pandas as pd
 from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score
+from sklearn.metrics import silhouette_score, silhouette_samples, adjusted_rand_score
 
 # Las 11 tasas de tipo de delito (excluye tasa_nuse e ipm_nbi, que tambien
 # viven en la matriz de features pero no son "tipo de delito").
@@ -103,3 +103,78 @@ def construir_zona_cluster(
         "cluster": etiquetas,
         "nombre_perfil": [nombres[c] for c in etiquetas],
     })
+
+
+def silhouette_por_cluster(features: pd.DataFrame, modelo: KMeans) -> pd.DataFrame:
+    """Silhouette medio y minimo por cluster (Issue #28).
+
+    A diferencia de evaluar_k (que reporta un unico silhouette global por k),
+    esta funcion desagrega por cluster: un cluster grande y cohesivo puede
+    esconder un cluster pequeno y debil en el promedio global.
+
+    Devuelve un DataFrame con columnas cluster, n, silhouette_medio,
+    silhouette_min, ordenado por cluster.
+    """
+    etiquetas = modelo.predict(features.values)
+    valores = silhouette_samples(features.values, etiquetas)
+    detalle = pd.DataFrame({"cluster": etiquetas, "silhouette": valores})
+    return (detalle.groupby("cluster")["silhouette"]
+                    .agg(n="count", silhouette_medio="mean", silhouette_min="min")
+                    .reset_index())
+
+
+def comparar_particiones(etiquetas_a, etiquetas_b) -> float:
+    """Adjusted Rand Index entre dos particiones (Issue #28).
+
+    Invariante a como se numeren los clusters (una permutacion de etiquetas
+    da el mismo ARI): compara si las MISMAS zonas quedan agrupadas juntas,
+    no si los numeros de cluster coinciden. Se reutiliza tanto para la
+    prueba de estabilidad de semillas como para comparar contra el baseline
+    trivial de terciles por conteo.
+    """
+    return adjusted_rand_score(etiquetas_a, etiquetas_b)
+
+
+def evaluar_estabilidad_semillas(
+    features: pd.DataFrame,
+    etiquetas_referencia,
+    k: int,
+    semillas,
+    n_init: int = 10,
+) -> pd.DataFrame:
+    """ARI de K-Means reentrenado con cada semilla vs. las etiquetas de
+    referencia (Issue #28).
+
+    etiquetas_referencia son las del modelo final ya entrenado (p. ej.
+    random_state=42). Para cada semilla en `semillas` se reentrena un
+    K-Means nuevo con ese random_state y se compara contra la referencia
+    con comparar_particiones. ARI cercano a 1.0 en todas las semillas
+    indica que la particion no depende de la inicializacion aleatoria.
+
+    Devuelve un DataFrame con columnas semilla, ari.
+    """
+    filas = []
+    for semilla in semillas:
+        modelo = KMeans(n_clusters=k, n_init=n_init, random_state=semilla)
+        etiquetas = modelo.fit_predict(features.values)
+        filas.append({
+            "semilla": semilla,
+            "ari": comparar_particiones(etiquetas_referencia, etiquetas),
+        })
+    return pd.DataFrame(filas)
+
+
+def terciles_por_conteo(conteo_total: pd.Series, k: int) -> pd.Series:
+    """Agrupa zonas en k grupos por conteo total, via cuantiles (Issue #28).
+
+    Baseline trivial para contrastar contra la tipologia real de K-Means: un
+    ordenamiento de una sola dimension (volumen bruto), sin las 13 features
+    del perfil de zona. Usa el mismo k que el clustering real para que la
+    comparacion (via comparar_particiones) sea directa.
+
+    Devuelve una serie de enteros 0..k-1 (0 = grupo de menor conteo), mismo
+    indice que conteo_total. Si hay empates que impiden cortar en
+    exactamente k grupos, pd.qcut reduce el numero de grupos
+    (duplicates="drop") en vez de fallar.
+    """
+    return pd.qcut(conteo_total, q=k, labels=False, duplicates="drop")
