@@ -121,3 +121,15 @@ def silhouette_por_cluster(features: pd.DataFrame, modelo: KMeans) -> pd.DataFra
     return (detalle.groupby("cluster")["silhouette"]
                     .agg(n="count", silhouette_medio="mean", silhouette_min="min")
                     .reset_index())
+
+
+def comparar_particiones(etiquetas_a, etiquetas_b) -> float:
+    """Adjusted Rand Index entre dos particiones (Issue #28).
+
+    Invariante a como se numeren los clusters (una permutacion de etiquetas
+    da el mismo ARI): compara si las MISMAS zonas quedan agrupadas juntas,
+    no si los numeros de cluster coinciden. Se reutiliza tanto para la
+    prueba de estabilidad de semillas como para comparar contra el baseline
+    trivial de terciles por conteo.
+    """
+    return adjusted_rand_score(etiquetas_a, etiquetas_b)

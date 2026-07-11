@@ -14,7 +14,7 @@ from sklearn.cluster import KMeans
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "models" / "clustering"))
 
-from clustering import silhouette_por_cluster
+from clustering import silhouette_por_cluster, comparar_particiones
 
 
 def _features_2_grupos_separados() -> pd.DataFrame:
@@ -47,3 +47,21 @@ def test_silhouette_por_cluster_ambos_grupos_cohesivos():
     assert (resumen["silhouette_medio"] > 0.9).all()
     assert resumen["silhouette_medio"].iloc[0] == pytest.approx(0.9888, abs=0.001)
     assert resumen["silhouette_min"].iloc[0] == pytest.approx(0.9863, abs=0.001)
+
+
+def test_comparar_particiones_identica_da_ari_uno():
+    et_a = [0, 0, 0, 0, 1, 1, 1, 1]
+    et_b = [0, 0, 0, 0, 1, 1, 1, 1]
+    assert comparar_particiones(et_a, et_b) == pytest.approx(1.0)
+
+
+def test_comparar_particiones_es_invariante_a_permutar_numeros_de_cluster():
+    et_a = [0, 0, 0, 0, 1, 1, 1, 1]
+    et_b_permutada = [1, 1, 1, 1, 0, 0, 0, 0]  # mismos grupos, etiquetas invertidas
+    assert comparar_particiones(et_a, et_b_permutada) == pytest.approx(1.0)
+
+
+def test_comparar_particiones_sin_relacion_da_ari_bajo():
+    et_a = [0, 0, 0, 0, 1, 1, 1, 1]
+    et_b_intercalada = [0, 1, 0, 1, 0, 1, 0, 1]  # no respeta los grupos de et_a
+    assert comparar_particiones(et_a, et_b_intercalada) == pytest.approx(-0.1667, abs=0.001)
