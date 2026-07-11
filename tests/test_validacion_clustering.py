@@ -14,7 +14,11 @@ from sklearn.cluster import KMeans
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "models" / "clustering"))
 
-from clustering import silhouette_por_cluster, comparar_particiones
+from clustering import (
+    silhouette_por_cluster,
+    comparar_particiones,
+    evaluar_estabilidad_semillas,
+)
 
 
 def _features_2_grupos_separados() -> pd.DataFrame:
@@ -65,3 +69,15 @@ def test_comparar_particiones_sin_relacion_da_ari_bajo():
     et_a = [0, 0, 0, 0, 1, 1, 1, 1]
     et_b_intercalada = [0, 1, 0, 1, 0, 1, 0, 1]  # no respeta los grupos de et_a
     assert comparar_particiones(et_a, et_b_intercalada) == pytest.approx(-0.1667, abs=0.001)
+
+
+def test_evaluar_estabilidad_semillas_particion_separada_es_perfectamente_estable():
+    features = _features_2_grupos_separados()
+    modelo_referencia = KMeans(n_clusters=2, n_init=10, random_state=42).fit(features.values)
+    etiquetas_referencia = modelo_referencia.predict(features.values)
+
+    tabla = evaluar_estabilidad_semillas(features, etiquetas_referencia, k=2, semillas=[0, 1, 2])
+
+    assert list(tabla.columns) == ["semilla", "ari"]
+    assert tabla["semilla"].tolist() == [0, 1, 2]
+    assert tabla["ari"].tolist() == pytest.approx([1.0, 1.0, 1.0])

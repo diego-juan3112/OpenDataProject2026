@@ -133,3 +133,32 @@ def comparar_particiones(etiquetas_a, etiquetas_b) -> float:
     trivial de terciles por conteo.
     """
     return adjusted_rand_score(etiquetas_a, etiquetas_b)
+
+
+def evaluar_estabilidad_semillas(
+    features: pd.DataFrame,
+    etiquetas_referencia,
+    k: int,
+    semillas,
+    n_init: int = 10,
+) -> pd.DataFrame:
+    """ARI de K-Means reentrenado con cada semilla vs. las etiquetas de
+    referencia (Issue #28).
+
+    etiquetas_referencia son las del modelo final ya entrenado (p. ej.
+    random_state=42). Para cada semilla en `semillas` se reentrena un
+    K-Means nuevo con ese random_state y se compara contra la referencia
+    con comparar_particiones. ARI cercano a 1.0 en todas las semillas
+    indica que la particion no depende de la inicializacion aleatoria.
+
+    Devuelve un DataFrame con columnas semilla, ari.
+    """
+    filas = []
+    for semilla in semillas:
+        modelo = KMeans(n_clusters=k, n_init=n_init, random_state=semilla)
+        etiquetas = modelo.fit_predict(features.values)
+        filas.append({
+            "semilla": semilla,
+            "ari": comparar_particiones(etiquetas_referencia, etiquetas),
+        })
+    return pd.DataFrame(filas)
