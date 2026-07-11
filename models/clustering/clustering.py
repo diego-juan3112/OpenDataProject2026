@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pandas as pd
 from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score
+from sklearn.metrics import silhouette_score, silhouette_samples, adjusted_rand_score
 
 # Las 11 tasas de tipo de delito (excluye tasa_nuse e ipm_nbi, que tambien
 # viven en la matriz de features pero no son "tipo de delito").
@@ -103,3 +103,21 @@ def construir_zona_cluster(
         "cluster": etiquetas,
         "nombre_perfil": [nombres[c] for c in etiquetas],
     })
+
+
+def silhouette_por_cluster(features: pd.DataFrame, modelo: KMeans) -> pd.DataFrame:
+    """Silhouette medio y minimo por cluster (Issue #28).
+
+    A diferencia de evaluar_k (que reporta un unico silhouette global por k),
+    esta funcion desagrega por cluster: un cluster grande y cohesivo puede
+    esconder un cluster pequeno y debil en el promedio global.
+
+    Devuelve un DataFrame con columnas cluster, n, silhouette_medio,
+    silhouette_min, ordenado por cluster.
+    """
+    etiquetas = modelo.predict(features.values)
+    valores = silhouette_samples(features.values, etiquetas)
+    detalle = pd.DataFrame({"cluster": etiquetas, "silhouette": valores})
+    return (detalle.groupby("cluster")["silhouette"]
+                    .agg(n="count", silhouette_medio="mean", silhouette_min="min")
+                    .reset_index())
