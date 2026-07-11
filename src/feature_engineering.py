@@ -122,6 +122,25 @@ def calcular_linea_base(
                  .reset_index())
 
 
+def conteo_total_por_zona(
+    df: pd.DataFrame,
+    split_col: str = "split",
+    train_value: str = "train",
+) -> pd.Series:
+    """Conteo total de conteo_siedco por localidad, SOLO train (Issue #28).
+
+    Suma conteo_siedco de todos los tipos de delito y anios de entrenamiento
+    para cada cod_localidad. Es el insumo del baseline trivial de
+    `terciles_por_conteo` (models/clustering/clustering.py): un ordenamiento
+    de zonas por volumen bruto, sin normalizar por poblacion ni distinguir
+    tipo de delito, para contrastar contra la tipologia real de K-Means.
+
+    Devuelve una serie indexada por cod_localidad, nombre `conteo_total`.
+    """
+    train = df[df[split_col] == train_value]
+    return train.groupby("cod_localidad")["conteo_siedco"].sum().rename("conteo_total")
+
+
 if __name__ == "__main__":
     import config
 
