@@ -577,9 +577,9 @@ por cluster, estabilidad ante semillas/submuestras, y comparación con una agrup
 trivial (solo por conteo total).
 
 **Criterios de aceptación:**
-- [ ] Silhouette global y por cluster reportado.
-- [ ] Prueba de estabilidad (varias semillas / submuestreo) documentada.
-- [ ] Argumento de por qué la tipología aporta más que ordenar zonas por conteo.
+- [x] Silhouette global y por cluster reportado.
+- [x] Prueba de estabilidad (varias semillas / submuestreo) documentada.
+- [x] Argumento de por qué la tipología aporta más que ordenar zonas por conteo.
 
 ---
 
