@@ -18,6 +18,7 @@ from clustering import (
     silhouette_por_cluster,
     comparar_particiones,
     evaluar_estabilidad_semillas,
+    terciles_por_conteo,
 )
 
 
@@ -81,3 +82,19 @@ def test_evaluar_estabilidad_semillas_particion_separada_es_perfectamente_establ
     assert list(tabla.columns) == ["semilla", "ari"]
     assert tabla["semilla"].tolist() == [0, 1, 2]
     assert tabla["ari"].tolist() == pytest.approx([1.0, 1.0, 1.0])
+
+
+def test_terciles_por_conteo_corta_en_3_grupos_ordenados():
+    conteo = pd.Series(
+        {"01": 10, "02": 20, "03": 30, "04": 40, "05": 50, "06": 60},
+        name="conteo_total",
+    )
+
+    terciles = terciles_por_conteo(conteo, k=3)
+
+    assert terciles.loc["01"] == 0
+    assert terciles.loc["02"] == 0
+    assert terciles.loc["03"] == 1
+    assert terciles.loc["04"] == 1
+    assert terciles.loc["05"] == 2
+    assert terciles.loc["06"] == 2

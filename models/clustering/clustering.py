@@ -162,3 +162,19 @@ def evaluar_estabilidad_semillas(
             "ari": comparar_particiones(etiquetas_referencia, etiquetas),
         })
     return pd.DataFrame(filas)
+
+
+def terciles_por_conteo(conteo_total: pd.Series, k: int) -> pd.Series:
+    """Agrupa zonas en k grupos por conteo total, via cuantiles (Issue #28).
+
+    Baseline trivial para contrastar contra la tipologia real de K-Means: un
+    ordenamiento de una sola dimension (volumen bruto), sin las 13 features
+    del perfil de zona. Usa el mismo k que el clustering real para que la
+    comparacion (via comparar_particiones) sea directa.
+
+    Devuelve una serie de enteros 0..k-1 (0 = grupo de menor conteo), mismo
+    indice que conteo_total. Si hay empates que impiden cortar en
+    exactamente k grupos, pd.qcut reduce el numero de grupos
+    (duplicates="drop") en vez de fallar.
+    """
+    return pd.qcut(conteo_total, q=k, labels=False, duplicates="drop")
