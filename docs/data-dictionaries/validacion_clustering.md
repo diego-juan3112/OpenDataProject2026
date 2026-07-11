@@ -18,7 +18,7 @@ regeneran corriendo el script.
 | Cluster | n | Nombre | silhouette medio | silhouette mín |
 |---|---|---|---|---|
 | 0 | 12 | Perfil de bajo incidente relativo | **0.498** | 0.387 |
-| 1 | 2  | Perfil de alto impacto generalizado | 0.249 | 0.219 |
+| 1 | 2  | Perfil de alto impacto generalizado | 0.249 | 0.247 |
 | 2 | 6  | Perfil hurto de bienes / ingreso alto | 0.219 | 0.037 |
 
 El cluster grande (bajo incidente, 12 zonas) es el más cohesivo. Los otros

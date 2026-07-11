@@ -390,7 +390,7 @@ un comentario corto de validación. Ver `BACKLOG.md` (issues) y `CRONOGRAMA.md`
   arquitectura, no algo ejecutable hoy — verifica con `ls`/`Glob` antes de
   asumir que un archivo de esas carpetas existe.
 - `tests/` ya tiene casos reales (`test_feature_engineering.py`,
-  `test_clustering.py`), además de `.github/workflows/ci.yml` corriendo
+  `test_clustering.py`, `test_validacion_clustering.py`), además de `.github/workflows/ci.yml` corriendo
   `pytest tests/ -v`. Todos usan DataFrames/matrices **sintéticos** en vez
   del parquet real, porque `data/` y `models/*/*.parquet` no están
   versionados y no existen en CI — sigue ese patrón para pruebas nuevas.
@@ -419,6 +419,8 @@ python pipelines/pipeline_ml.py
 # Clustering (Integrante 3) -> models/clustering/{features_zona,linea_base_zscore,zona_cluster}.parquet, clusters.joblib
 python models/clustering/build_features.py
 python models/clustering/train.py
+# Validar estabilidad interna del clustering (silhouette, ARI contra semillas aleatorias)
+python models/clustering/validate.py
 
 # Lo que corre CI (.github/workflows/ci.yml)
 python -m compileall src pipelines tests
