@@ -367,19 +367,33 @@ un comentario corto de validación. Ver `BACKLOG.md` (issues) y `CRONOGRAMA.md`
   Issues #1–#12 (Integrante 1). El handoff detallado está en
   `docs/HANDOFF_INT1.md` (contrato de columnas, decisiones pendientes, sesgos
   identificados en los datos — léelo antes de tocar el dataset analítico).
-- **Scaffold / placeholder:** `src/feature_engineering.py` (solo expone la
-  variable objetivo `riesgo_alto`), `src/model_training.py`,
-  `src/model_evaluation.py`, la mayoría de `notebooks/*` (excepto el EDA #11 y
+- **Completo:** `models/clustering/` — Issues #26–#27 (Integrante 3):
+  `build_features.py` construye la matriz de features de zona + línea base
+  z-score (consumen `src/feature_engineering.py::construir_features_zona` /
+  `calcular_linea_base`), `clustering.py` expone las funciones puras de
+  K-Means (testeables con datos sintéticos, sin leer disco) y `train.py`
+  orquesta el entrenamiento final (k=3, justificado por codo +
+  interpretabilidad, no por silhouette máximo) y serializa
+  `clusters.joblib` + `zona_cluster.parquet`. Ver
+  `docs/data-dictionaries/` para la tipología de perfiles.
+- **Scaffold / placeholder:** `src/model_training.py`,
+  `src/model_evaluation.py` (Integrante 2, predictivo aún no entrenado), la
+  mayoría de `notebooks/*` (excepto el EDA #11 y
   `ejemplo_dataset_analitico.ipynb`), y la mayoría de `docs/*.md` fuera de
   `fuentes_datos.md`, `data_dictionary.md` y `data-dictionaries/`.
+  `src/feature_engineering.py` ya no es solo placeholder: además de
+  `add_target_riesgo_alto` (variable objetivo del predictivo), expone
+  `construir_features_zona` y `calcular_linea_base` que usa el clustering.
 - **No existen aún en disco:** `api/`, `app/`, `mobile/`,
-  `models/predictivo/`, `models/clustering/`. Los comandos de `README.md` para
-  esas piezas (`uvicorn`, `streamlit run`, `expo start`) documentan el plan de
+  `models/predictivo/`. Los comandos de `README.md` para esas piezas
+  (`uvicorn`, `streamlit run`, `expo start`) documentan el plan de
   arquitectura, no algo ejecutable hoy — verifica con `ls`/`Glob` antes de
   asumir que un archivo de esas carpetas existe.
-- `tests/` está vacío (solo `.gitkeep`) pero `.github/workflows/ci.yml` corre
-  `pytest tests/ -v`; cualquier trabajo en `src/`/`pipelines/` debería venir
-  con sus pruebas en `tests/`.
+- `tests/` ya tiene casos reales (`test_feature_engineering.py`,
+  `test_clustering.py`), además de `.github/workflows/ci.yml` corriendo
+  `pytest tests/ -v`. Todos usan DataFrames/matrices **sintéticos** en vez
+  del parquet real, porque `data/` y `models/*/*.parquet` no están
+  versionados y no existen en CI — sigue ese patrón para pruebas nuevas.
 - `CRONOGRAMA.md` se referencia desde README/BACKLOG pero no existe en el
   repo (ver nota de seguimiento en `ESTRUCTURA.md` §5).
 
@@ -402,9 +416,17 @@ python src/ingest_dane.py
 # Pipeline completo -> data/03_primary/{dataset_analitico.parquet, zonas_bogota.geojson}
 python pipelines/pipeline_ml.py
 
+# Clustering (Integrante 3) -> models/clustering/{features_zona,linea_base_zscore,zona_cluster}.parquet, clusters.joblib
+python models/clustering/build_features.py
+python models/clustering/train.py
+
 # Lo que corre CI (.github/workflows/ci.yml)
 python -m compileall src pipelines tests
 pytest tests/ -v
+
+# Un solo archivo o test (los tests usan datos sintéticos, no requieren data/)
+pytest tests/test_clustering.py -v
+pytest tests/test_clustering.py::test_nombrar_clusters_asigna_los_3_perfiles_esperados -v
 ```
 
 No hay linter/formatter configurado (no hay `ruff`, `flake8` ni `black` en
