@@ -8,6 +8,7 @@ data/04_model_output/*
 *.xlsx
 *.parquet
 *.geojson
+!app/mock_data/*.geojson
 *.shp
 *.dbf
 *.shx

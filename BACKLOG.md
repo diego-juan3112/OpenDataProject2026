@@ -644,9 +644,9 @@ base de Bogotá con `streamlit-folium`, y la función de consumo de la API
 sin esperar a la API real.
 
 **Criterios de aceptación:**
-- [ ] `streamlit run app/streamlit_app.py` levanta y muestra el mapa base de Bogotá.
-- [ ] Función de carga del GeoJSON (mock con el shape acordado en #20).
-- [ ] Layout base (sidebar de controles + área de mapa) + README de cómo correr.
+- [x] `streamlit run app/streamlit_app.py` levanta y muestra el mapa base de Bogotá.
+- [x] Función de carga del GeoJSON (mock con el shape acordado en #20).
+- [x] Layout base (sidebar de controles + área de mapa) + README de cómo correr.
 
 ---
 
