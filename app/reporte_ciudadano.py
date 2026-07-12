@@ -80,10 +80,11 @@ AVISO_PRIVACIDAD = (
 
 
 def _mensaje_resultado(reporte: dict) -> None:
+    tipo_nombre = config.SIEDCO_TIPOS.get(reporte["tipo_delito"], reporte["tipo_delito"])
     if reporte["z_score"] is None:
         st.warning(
-            ":material/report: Esta zona no tenía ningún caso histórico de "
-            f"{reporte['tipo_delito']} en los datos de entrenamiento — tu "
+            f":material/report: Esta zona no tenía ningún caso histórico de "
+            f"{tipo_nombre} en los datos de entrenamiento — tu "
             "reporte es una señal genuina de algo nuevo en esta localidad."
         )
         return
@@ -108,11 +109,22 @@ def render_formulario_reporte(zonas_riesgo: dict, linea_base: list[dict], ultimo
     ({"lat": .., "lng": ..}) de la corrida anterior del mapa, o None si
     todavia no se ha hecho clic (Issue #36, criterio: no rompe ante input
     faltante).
+
+    Al enviar un reporte, esta funcion fuerza un st.rerun(): los marcadores
+    del mapa se dibujan en streamlit_app.py ANTES de llamar a esta funcion
+    (necesitan el session_state ya actualizado), asi que sin el rerun el
+    marcador del reporte recien enviado no aparece hasta la siguiente
+    interaccion del usuario. El resultado (_mensaje_resultado) se guarda en
+    session_state para mostrarse justo despues del rerun.
     """
     st.session_state.setdefault("reportes", [])
     st.session_state.setdefault("consentimiento_reporte", False)
+    st.session_state.setdefault("ultimo_resultado", None)
 
     st.subheader(":material/campaign: Reporte ciudadano (simulado)")
+
+    if st.session_state["ultimo_resultado"] is not None:
+        _mensaje_resultado(st.session_state["ultimo_resultado"])
 
     with st.expander("Aviso de privacidad", expanded=not st.session_state["consentimiento_reporte"]):
         st.write(AVISO_PRIVACIDAD)
@@ -147,4 +159,5 @@ def render_formulario_reporte(zonas_riesgo: dict, linea_base: list[dict], ultimo
         tipo_codigo = next(codigo for codigo, nombre in config.SIEDCO_TIPOS.items() if nombre == tipo_nombre)
         reporte = construir_reporte(cod_localidad, tipo_codigo, descripcion.strip(), lat, lon, linea_base)
         st.session_state["reportes"].append(reporte)
-        _mensaje_resultado(reporte)
+        st.session_state["ultimo_resultado"] = reporte
+        st.rerun()
