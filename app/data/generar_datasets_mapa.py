@@ -36,12 +36,14 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "src"))
 import config
+import feature_engineering
 
 OUT_DIR = Path(__file__).resolve().parent
 GEOMETRIA_PATH = OUT_DIR / "geometria_localidades.geojson"
 RIESGO_PATH = OUT_DIR / "riesgo_por_zona.json"
 TIPOLOGIA_PATH = OUT_DIR / "tipologia_zonas.json"
 NUSE_PATH = OUT_DIR / "nuse_por_zona.json"
+LINEA_BASE_PATH = OUT_DIR / "linea_base_zscore.json"
 
 ZONA_CLUSTER_PATH = config.ROOT / "models" / "clustering" / "zona_cluster.parquet"
 NUSE_INCIDENTES_PATH = config.ROOT / "data" / "02_intermediate" / "nuse_incidentes.parquet"
@@ -59,12 +61,13 @@ CODIGOS_LOCALIDAD_VALIDOS = [f"{i:02d}" for i in range(1, 21)]
 
 
 def run() -> None:
-    print("== #33 Generar datasets reales del mapa ==")
+    print("== #33/#36 Generar datasets reales del mapa ==")
     _generar_geometria()
     _generar_riesgo()
     _generar_tipologia()
     _generar_nuse()
-    print("\n  [ok] los 4 archivos de app/data/ estan listos")
+    _generar_linea_base()
+    print("\n  [ok] los 5 archivos de app/data/ estan listos")
 
 
 def _generar_geometria() -> None:
@@ -135,6 +138,19 @@ def _generar_nuse() -> None:
         json.dump(registros, f, ensure_ascii=False)
     print(f"  nuse_por_zona.json: {len(registros)} filas, "
           f"{len(ceros)} en cero estructural: {ceros}, {NUSE_PATH.stat().st_size} bytes")
+
+
+def _generar_linea_base() -> None:
+    df = pd.read_parquet(config.DATASET_ANALITICO)
+    linea_base = feature_engineering.calcular_linea_base(df)
+    linea_base["media"] = linea_base["media"].astype(float)
+    linea_base["desviacion"] = linea_base["desviacion"].astype(float)
+    registros = linea_base.to_dict(orient="records")
+
+    assert len(registros) == 220, "esperadas 20 localidades x 11 tipos = 220 filas"
+    with open(LINEA_BASE_PATH, "w", encoding="utf-8") as f:
+        json.dump(registros, f, ensure_ascii=False)
+    print(f"  linea_base_zscore.json: {len(registros)} filas, {LINEA_BASE_PATH.stat().st_size} bytes")
 
 
 if __name__ == "__main__":
