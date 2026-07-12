@@ -29,6 +29,7 @@ GEOMETRIA_PATH = DATA_DIR / "geometria_localidades.geojson"
 RIESGO_PATH = DATA_DIR / "riesgo_por_zona.json"
 TIPOLOGIA_PATH = DATA_DIR / "tipologia_zonas.json"
 NUSE_PATH = DATA_DIR / "nuse_por_zona.json"
+LINEA_BASE_PATH = DATA_DIR / "linea_base_zscore.json"
 
 
 @st.cache_data
@@ -109,3 +110,13 @@ def cargar_densidad_nuse(anio: int) -> dict:
         feature["properties"]["conteo_nuse"] = nuse_por_localidad[cod]
 
     return geojson
+
+
+@st.cache_data
+def cargar_linea_base() -> list[dict]:
+    """Linea base historica real (#26): lista de dicts con cod_localidad,
+    tipo_delito, media, desviacion. Consumida por
+    app/reporte_ciudadano.py::construir_reporte (via flag_zscore, #29).
+    """
+    with open(LINEA_BASE_PATH, encoding="utf-8") as f:
+        return json.load(f)

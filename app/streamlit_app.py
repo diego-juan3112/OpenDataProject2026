@@ -24,7 +24,8 @@ from streamlit_folium import st_folium
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 import config
 
-from data_loader import cargar_zonas_riesgo, cargar_densidad_nuse
+from data_loader import cargar_zonas_riesgo, cargar_densidad_nuse, cargar_linea_base
+from reporte_ciudadano import render_formulario_reporte
 
 # Cubre las 20 localidades reales (incluida la rural Sumapaz al sur),
 # verificado contra data/03_primary/zonas_bogota.geojson:
@@ -37,6 +38,7 @@ COLOR_TIPOLOGIA = {
     "Perfil hurto de bienes / ingreso alto": "#f39c12",
     "Perfil de bajo incidente relativo": "#27ae60",
 }
+ICONO_POR_ATIPICO = {True: ("triangle-exclamation", "red"), False: ("circle-check", "green")}
 
 
 def _estilo_riesgo(feature: dict) -> dict:
@@ -52,6 +54,8 @@ def _estilo_tipologia(feature: dict) -> dict:
 def main() -> None:
     st.set_page_config(page_title="Alerta Ciudadana", layout="wide")
     st.title("Alerta Ciudadana — Mapa de riesgo por zona")
+
+    st.session_state.setdefault("reportes", [])
 
     with st.sidebar:
         st.header("Controles")
@@ -115,7 +119,22 @@ def main() -> None:
             ),
         ).add_to(mapa)
 
-    st_folium(mapa, height=600)
+    for reporte in st.session_state["reportes"]:
+        icono_nombre, color = ICONO_POR_ATIPICO[reporte["es_atipico"]]
+        folium.Marker(
+            location=[reporte["lat"], reporte["lon"]],
+            popup=folium.Popup(
+                f"<b>{config.SIEDCO_TIPOS.get(reporte['tipo_delito'], reporte['tipo_delito'])}</b>"
+                f"<br>{reporte['descripcion']}",
+                max_width=250,
+            ),
+            icon=folium.Icon(color=color, icon=icono_nombre, prefix="fa"),
+        ).add_to(mapa)
+
+    map_data = st_folium(mapa, height=600)
+
+    linea_base = cargar_linea_base()
+    render_formulario_reporte(zonas_riesgo, linea_base, (map_data or {}).get("last_clicked"))
 
 
 if __name__ == "__main__":
