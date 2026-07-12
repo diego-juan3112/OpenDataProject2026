@@ -661,9 +661,9 @@ coroplético de localidades coloreado por riesgo, (b) densidad de NUSE por local
 etiqueta de perfil).
 
 **Criterios de aceptación:**
-- [ ] Coroplético colorea las localidades por riesgo, con selector de año/tipo de delito y leyenda + tooltip por localidad.
-- [ ] Capa de densidad NUSE activable, coloreada por volumen de llamadas por localidad/UPZ (sin puntos, porque el dato es agregado).
-- [ ] Capa de tipología que colorea las zonas por cluster con la etiqueta de perfil (#27) y tooltip en lenguaje no técnico.
+- [x] Coroplético colorea las localidades por riesgo, con selector de año/tipo de delito y leyenda + tooltip por localidad.
+- [x] Capa de densidad NUSE activable, coloreada por volumen de llamadas por localidad/UPZ (sin puntos, porque el dato es agregado).
+- [x] Capa de tipología que colorea las zonas por cluster con la etiqueta de perfil (#27) y tooltip en lenguaje no técnico.
 
 ---
 
