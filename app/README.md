@@ -34,8 +34,10 @@ más):
 3. **Tipología de zonas**: colorea por el perfil de K-Means real (Issue
    #27), con tooltip en lenguaje no técnico.
 
-Activa/desactiva capas con el control en la esquina superior derecha del
-mapa.
+La capa de riesgo siempre está visible (es la capa base); activa/desactiva
+NUSE y tipología con los checkboxes del sidebar, no con un control flotante
+sobre el mapa — mismo lugar que el resto de los controles (año, tipo de
+delito), para una experiencia consistente.
 
 ## Datos: `app/data/`
 

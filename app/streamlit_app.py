@@ -2,12 +2,14 @@
 streamlit_app.py — Issue #33 (reemplaza el mapa de un solo layer de la Issue #32)
 
 Dashboard analitico de Alerta Ciudadana. 3 capas reales, togglables:
-coropletico de riesgo (percentil historico, #10), densidad NUSE (agregada a
-nivel localidad -- no existe geometria real de UPZ, ver app/README.md), y
-tipologia de zonas (K-Means real, #27). La Issue #34 reemplaza
-cargar_zonas_riesgo() por la API real GET /zonas-riesgo (#20);
-cargar_densidad_nuse() se queda local para siempre (NUSE no forma parte del
-contrato de esa API).
+coropletico de riesgo (percentil historico, #10, siempre visible), densidad
+NUSE (agregada a nivel localidad -- no existe geometria real de UPZ, ver
+app/README.md) y tipologia de zonas (K-Means real, #27), estas dos ultimas
+activables con checkboxes del sidebar (no con el LayerControl nativo de
+Leaflet, para mantener un solo lugar de controles consistente con el resto
+de la app). La Issue #34 reemplaza cargar_zonas_riesgo() por la API real
+GET /zonas-riesgo (#20); cargar_densidad_nuse() se queda local para siempre
+(NUSE no forma parte del contrato de esa API).
 """
 from __future__ import annotations
 
@@ -63,58 +65,56 @@ def main() -> None:
             "de incidentes), no el modelo predictivo real — se conecta a la "
             "API real en la Issue #34."
         )
+        st.divider()
+        mostrar_nuse = st.checkbox("Mostrar densidad NUSE", value=False)
+        mostrar_tipologia = st.checkbox("Mostrar tipología de zonas", value=False)
 
     zonas_riesgo = cargar_zonas_riesgo(anio, tipo_codigo)
-    densidad_nuse = cargar_densidad_nuse(anio)
 
     mapa = folium.Map()
     mapa.fit_bounds(LIMITES_BOGOTA)
 
     folium.GeoJson(
         zonas_riesgo,
-        name="Riesgo por zona",
         style_function=_estilo_riesgo,
         tooltip=folium.GeoJsonTooltip(
             fields=["localidad_nombre", "riesgo_alto", "conteo_siedco"],
             aliases=["Localidad", "¿Riesgo alto?", "Incidentes registrados"],
         ),
-        show=True,
     ).add_to(mapa)
 
-    conteos_nuse = [f["properties"]["conteo_nuse"] for f in densidad_nuse["features"]]
-    colormap = cm.LinearColormap(
-        colors=["#fff5cc", "#e67e22", "#7b241c"], vmin=min(conteos_nuse), vmax=max(conteos_nuse)
-    )
-    colormap.caption = "Llamadas al 123 (agregado por localidad)"
-    folium.GeoJson(
-        densidad_nuse,
-        name="Densidad NUSE (por localidad)",
-        style_function=lambda feature: {
-            "fillColor": colormap(feature["properties"]["conteo_nuse"]),
-            "color": "#555555",
-            "weight": 1,
-            "fillOpacity": 0.7,
-        },
-        tooltip=folium.GeoJsonTooltip(
-            fields=["localidad_nombre", "conteo_nuse"],
-            aliases=["Localidad", "Llamadas al 123"],
-        ),
-        show=False,
-    ).add_to(mapa)
-    colormap.add_to(mapa)
+    if mostrar_nuse:
+        densidad_nuse = cargar_densidad_nuse(anio)
+        conteos_nuse = [f["properties"]["conteo_nuse"] for f in densidad_nuse["features"]]
+        colormap = cm.LinearColormap(
+            colors=["#fff5cc", "#e67e22", "#7b241c"], vmin=min(conteos_nuse), vmax=max(conteos_nuse)
+        )
+        colormap.caption = "Llamadas al 123 (agregado por localidad)"
+        folium.GeoJson(
+            densidad_nuse,
+            style_function=lambda feature: {
+                "fillColor": colormap(feature["properties"]["conteo_nuse"]),
+                "color": "#555555",
+                "weight": 1,
+                "fillOpacity": 0.7,
+            },
+            tooltip=folium.GeoJsonTooltip(
+                fields=["localidad_nombre", "conteo_nuse"],
+                aliases=["Localidad", "Llamadas al 123"],
+            ),
+        ).add_to(mapa)
+        colormap.add_to(mapa)
 
-    folium.GeoJson(
-        zonas_riesgo,
-        name="Tipología de zonas",
-        style_function=_estilo_tipologia,
-        tooltip=folium.GeoJsonTooltip(
-            fields=["localidad_nombre", "nombre_perfil"],
-            aliases=["Localidad", "Perfil"],
-        ),
-        show=False,
-    ).add_to(mapa)
+    if mostrar_tipologia:
+        folium.GeoJson(
+            zonas_riesgo,
+            style_function=_estilo_tipologia,
+            tooltip=folium.GeoJsonTooltip(
+                fields=["localidad_nombre", "nombre_perfil"],
+                aliases=["Localidad", "Perfil"],
+            ),
+        ).add_to(mapa)
 
-    folium.LayerControl(collapsed=False).add_to(mapa)
     st_folium(mapa, height=600)
 
 
