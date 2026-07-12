@@ -3,3 +3,5 @@
 streamlit==1.59.1
 folium==0.20.0
 streamlit-folium==0.27.2
+pandas==3.0.3
+shapely==2.1.2

@@ -39,6 +39,26 @@ NUSE y tipología con los checkboxes del sidebar, no con un control flotante
 sobre el mapa — mismo lugar que el resto de los controles (año, tipo de
 delito), para una experiencia consistente.
 
+## Reporte ciudadano simulado (Issue #36)
+
+Haz clic en el mapa para elegir una ubicación, acepta el aviso de
+privacidad, elige el tipo de delito y escribe una descripción — el reporte
+se evalúa contra la línea base histórica real (Issue #26) con
+`flag_zscore()` (Issue #29) y aparece como marcador en el mapa. Todo vive
+en `st.session_state`: no hay base de datos, se pierde al cerrar la
+pestaña (ver `CLAUDE.md` §1).
+
+**Cómo leer el resultado:** cada reporte se evalúa solo (`conteo=1`) contra
+un promedio **histórico anual** — por eso casi siempre sale "por debajo del
+promedio" (un solo reporte nunca es comparable en escala a un año
+completo). Esto es normal y se explica en el mensaje, no es una alerta de
+peligro. La excepción real es una localidad sin ningún historial para ese
+tipo de delito: ahí un solo reporte sí es una señal genuina.
+
+Requiere `pandas` y `shapely` (agregados a `app/requirements.txt` en esta
+issue — ambos ya estaban instalados en el venv compartido del repo, vía la
+dependencia de `geopandas` del pipeline).
+
 ## Datos: `app/data/`
 
 Los 4 archivos en `app/data/*.json`/`*.geojson` están **commiteados** (a

@@ -61,3 +61,90 @@ def construir_reporte(
         "lon": lon,
         **resultado,
     }
+
+
+import streamlit as st
+
+import config  # src/ ya esta en sys.path por el sys.path.insert de la Tarea 3, arriba en este mismo archivo
+
+from localidad_lookup import ubicar_localidad
+
+AVISO_PRIVACIDAD = (
+    "Los datos de este reporte (ubicación, tipo de delito, descripción) se "
+    "usan únicamente para esta demostración, viven solo en tu sesión del "
+    "navegador (no se guardan en ninguna base de datos) y se borran al "
+    "cerrar la pestaña. No se comparten con terceros. Al continuar, aceptas "
+    "el tratamiento de estos datos conforme a la Ley 1581 de 2012 "
+    "(protección de datos personales, Colombia)."
+)
+
+
+def _mensaje_resultado(reporte: dict) -> None:
+    if reporte["z_score"] is None:
+        st.warning(
+            ":material/report: Esta zona no tenía ningún caso histórico de "
+            f"{reporte['tipo_delito']} en los datos de entrenamiento — tu "
+            "reporte es una señal genuina de algo nuevo en esta localidad."
+        )
+        return
+
+    st.info(
+        f":material/info: Tu reporte es 1 caso puntual. El promedio "
+        f"histórico anual para esta localidad y tipo de delito es de "
+        f"{reporte['media']:.0f} casos (z={reporte['z_score']:.2f}) — es "
+        "normal que un solo reporte quede muy por debajo de un promedio "
+        "anual; esto no es una alerta de riesgo por sí solo."
+    )
+
+
+def render_formulario_reporte(zonas_riesgo: dict, linea_base: list[dict], ultimo_clic: dict | None) -> None:
+    """Renderiza el formulario de reporte ciudadano (Issue #36).
+
+    zonas_riesgo es el GeoJSON ya cargado por cargar_zonas_riesgo() (tiene
+    la geometria real de las 20 localidades) -- se reutiliza aqui para
+    ubicar_localidad(), sin cargar la geometria una segunda vez.
+
+    ultimo_clic es el dict que devuelve st_folium() en 'last_clicked'
+    ({"lat": .., "lng": ..}) de la corrida anterior del mapa, o None si
+    todavia no se ha hecho clic (Issue #36, criterio: no rompe ante input
+    faltante).
+    """
+    st.session_state.setdefault("reportes", [])
+    st.session_state.setdefault("consentimiento_reporte", False)
+
+    st.subheader(":material/campaign: Reporte ciudadano (simulado)")
+
+    with st.expander("Aviso de privacidad", expanded=not st.session_state["consentimiento_reporte"]):
+        st.write(AVISO_PRIVACIDAD)
+        st.session_state["consentimiento_reporte"] = st.checkbox(
+            "Acepto el tratamiento de mis datos para esta demostración",
+            value=st.session_state["consentimiento_reporte"],
+        )
+
+    if not st.session_state["consentimiento_reporte"]:
+        st.caption("Marca el checkbox de consentimiento para habilitar el formulario.")
+        return
+
+    if ultimo_clic is None:
+        st.caption("Haz clic en el mapa para elegir la ubicación del reporte.")
+        return
+
+    lat, lon = ultimo_clic["lat"], ultimo_clic["lng"]
+    cod_localidad = ubicar_localidad(lat, lon, zonas_riesgo)
+    if cod_localidad is None:
+        st.error("Esa ubicación está fuera de Bogotá. Haz clic dentro de una de las 20 localidades.")
+        return
+
+    with st.form("form_reporte_ciudadano", clear_on_submit=True):
+        tipo_nombre = st.selectbox("Tipo de delito", options=list(config.SIEDCO_TIPOS.values()))
+        descripcion = st.text_area("Descripción (requerida)")
+        enviado = st.form_submit_button(":material/send: Enviar reporte")
+
+    if enviado:
+        if not descripcion.strip():
+            st.error("La descripción es obligatoria.")
+            return
+        tipo_codigo = next(codigo for codigo, nombre in config.SIEDCO_TIPOS.items() if nombre == tipo_nombre)
+        reporte = construir_reporte(cod_localidad, tipo_codigo, descripcion.strip(), lat, lon, linea_base)
+        st.session_state["reportes"].append(reporte)
+        _mensaje_resultado(reporte)

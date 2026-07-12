@@ -708,10 +708,10 @@ consentimiento opt-in**. Comparte con Int. 4 el patrón de aviso de privacidad p
 mantenerlo consistente con el permiso de GPS del móvil.
 
 **Criterios de aceptación:**
-- [ ] El formulario añade un punto a la sesión y lo renderiza en el mapa.
-- [ ] El reporte dispara el flag z-score y muestra resultado interpretable.
-- [ ] Validación de input (rechaza coords fuera de Bogotá; campos requeridos; no rompe ante input ruidoso/faltante).
-- [ ] Checkbox de consentimiento opt-in + enlace al aviso de privacidad (Ley 1581/2012). **No se recorta.**
+- [x] El formulario añade un punto a la sesión y lo renderiza en el mapa.
+- [x] El reporte dispara el flag z-score y muestra resultado interpretable.
+- [x] Validación de input (rechaza coords fuera de Bogotá; campos requeridos; no rompe ante input ruidoso/faltante).
+- [x] Checkbox de consentimiento opt-in + enlace al aviso de privacidad (Ley 1581/2012). **No se recorta.**
 
 ---
 
