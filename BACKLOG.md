@@ -594,9 +594,9 @@ reporte ciudadano simulado. Compara el conteo reciente contra la línea base his
 por localidad–tipo (#26).
 
 **Criterios de aceptación:**
-- [ ] `flag_zscore(localidad, tipo_delito, conteo)` documentada y testeada con casos límite.
-- [ ] Acordada con la vista de reporte del dashboard (#36).
-- [ ] Sin fuga: usa solo la línea base histórica de #26.
+- [x] `flag_zscore(localidad, tipo_delito, conteo)` documentada y testeada con casos límite.
+- [x] Acordada con la vista de reporte del dashboard (#36).
+- [x] Sin fuga: usa solo la línea base histórica de #26.
 
 ---
 
