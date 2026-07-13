@@ -65,3 +65,58 @@ def mejor_umbral_f1(y_true, y_proba) -> tuple[float, float]:
     f1s = (2 * precision[:-1] * recall[:-1]) / np.clip(precision[:-1] + recall[:-1], 1e-12, None)
     idx = int(np.nanargmax(f1s))
     return float(thresholds[idx]), float(f1s[idx])
+
+
+# --------------------------------------------------------------------------- #
+# Score de riesgo por localidad — feature Ruta Más Segura (Issue #46)
+# --------------------------------------------------------------------------- #
+# Pesos por gravedad relativa del tipo de delito (del diseño técnico,
+# `diseño_tecnico_ruta_segura.md` §PARTE 3, Paso 1). NO cambiar sin justificar
+# y documentar: son defendibles ante el jurado (homicidio pesa 10× una bici).
+PESOS_TIPO_DELITO = {
+    "H":   10,   # Homicidios
+    "DS":   8,   # Delitos Sexuales
+    "LP":   7,   # Lesiones Personales
+    "HP":   5,   # Hurto Personas
+    "VI":   5,   # Violencia Intrafamiliar
+    "HR":   4,   # Hurto Residencias
+    "HC":   3,   # Hurto Comercio
+    "HCE":  3,   # Hurto Celulares
+    "HA":   3,   # Hurto Automotores
+    "HM":   2,   # Hurto Motocicletas
+    "HB":   1,   # Hurto Bicicletas
+}
+
+
+def calcular_scores_localidad(dataset_path: str) -> dict[str, float]:
+    """Score de riesgo 0–10 por localidad para el routing de Ruta Más Segura.
+
+    Lee el dataset analítico y devuelve un score de riesgo 0–10 por localidad,
+    usando datos de 2024 (último año de entrenamiento). El score es la suma
+    ponderada de `conteo_siedco` por tipo de delito (pesos de
+    `PESOS_TIPO_DELITO`), normalizada al rango 0–10 con min-max. Solo usa filas
+    `split == "train"`; nunca test.
+
+    Devuelve: dict {cod_localidad: score} con exactamente 20 claves.
+    Ejemplo: {"01": 3.2, "08": 8.7, "11": 7.4, ...}
+
+    Nota: el score usa conteo absoluto (no por 100k habitantes).
+    Localidades densamente pobladas como Suba/Kennedy pueden aparecer
+    con score alto por volumen, no por tasa. Mejora futura: normalizar
+    por población antes de aplicar pesos.
+    """
+    df = pd.read_parquet(dataset_path)
+    df_2024 = df[(df["anio"] == 2024) & (df["split"] == "train")].copy()
+
+    df_2024["conteo_ponderado"] = (
+        df_2024["conteo_siedco"] * df_2024["tipo_delito"].map(PESOS_TIPO_DELITO).fillna(1)
+    )
+
+    scores_raw = df_2024.groupby("cod_localidad")["conteo_ponderado"].sum()
+    rango = scores_raw.max() - scores_raw.min()
+    if rango == 0:  # todos iguales (no debería ocurrir con 20 localidades reales)
+        scores_norm = scores_raw * 0.0
+    else:
+        scores_norm = (scores_raw - scores_raw.min()) / rango * 10
+
+    return scores_norm.round(2).to_dict()
