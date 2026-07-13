@@ -23,7 +23,22 @@ Detalle de error por localidad/tipo y robustez: `models/predictivo/ROBUSTEZ.md`.
 
 ### Comentario cruzado de Integrante 3 (Issue #30)
 
-> *Pendiente — Int. 3 completa esta casilla al cerrar #30.*
+> Sin fuga temporal clásica — `temporal_split()` la verifica en runtime y los
+> lags respetan el orden del tiempo; el umbral se calibró en un holdout
+> temporal, no en test. La métrica (recall/F1 de la clase riesgo alto) es la
+> correcta según `CLAUDE.md`. Hallazgo accionable: corriendo `train.py` de
+> punta a punta, el modelo final apenas supera al baseline histórico ingenuo
+> (F1 0.690 vs 0.682, +1 verdadero positivo de 31, precisión casi idéntica), y
+> la importancia de features del RF muestra que `poblacion` domina (33%, el
+> triple de la siguiente feature) — como `riesgo_alto` se define sobre conteo
+> crudo y no tasa per cápita, el modelo puede estar aprendiendo en buena parte
+> "zona grande" más que "zona peligrosa". No hay evidencia de memorización de
+> `cod_localidad` (bajo riesgo de sesgo de vigilancia clásico), pero sí de un
+> sesgo de escala poblacional no documentado hoy en `MODEL_CARD.md`. Se acepta
+> el modelo, con la recomendación de documentar este sesgo y considerar una
+> versión del target normalizada por población en una iteración futura.
+
+Texto completo: `models/predictivo/qa_cruzada.md`.
 
 ---
 
