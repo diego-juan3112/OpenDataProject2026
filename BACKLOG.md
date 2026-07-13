@@ -610,9 +610,9 @@ sección compartida: ¿hay fuga temporal?, ¿la métrica es adecuada?, ¿solo re
 sesgo de vigilancia? Deja un comentario de validación.
 
 **Criterios de aceptación:**
-- [ ] Comentario de validación cruzada del predictivo en la sección compartida del informe.
-- [ ] Verificación explícita de ausencia de fuga temporal.
-- [ ] Al menos 1 hallazgo accionable o confirmación de validez con evidencia.
+- [x] Comentario de validación cruzada del predictivo en la sección compartida del informe.
+- [x] Verificación explícita de ausencia de fuga temporal.
+- [x] Al menos 1 hallazgo accionable o confirmación de validez con evidencia.
 
 ---
 
