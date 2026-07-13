@@ -627,9 +627,9 @@ más patrulladas (más registros) y no necesariamente con más delito real? **La
 discusión de sesgo/estigmatización no se recorta.**
 
 **Criterios de aceptación:**
-- [ ] Comparación entre intensidad de registro y proxys de delito real / contexto.
-- [ ] Al menos 2 riesgos de sesgo/estigmatización identificados con evidencia.
-- [ ] Recomendaciones de uso responsable (qué NO debe hacerse con el mapa).
+- [x] Comparación entre intensidad de registro y proxys de delito real / contexto.
+- [x] Al menos 2 riesgos de sesgo/estigmatización identificados con evidencia.
+- [x] Recomendaciones de uso responsable (qué NO debe hacerse con el mapa).
 
 ---
 

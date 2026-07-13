@@ -68,7 +68,29 @@ Texto completo: `models/clustering/qa_cruzada.md`.
 
 ---
 
-## C. Trazabilidad a criterios de la convocatoria
+## D. Auditoría de sesgo — predictivo + clustering (Integrante 3, Issue #31)
+
+> SIEDCO y NUSE (dos canales de registro independientes) correlacionan
+> fuerte (r=0.94) y ninguno correlaciona con pobreza (r≈−0.05/−0.09) —
+> evidencia en contra de que el conteo policial sea un artefacto puro de
+> vigilancia diferencial. **Pero** `riesgo_alto` (predictivo) se define
+> sobre conteo crudo, no tasa por habitante: Candelaria tiene la tasa de
+> delito por habitante más alta de Bogotá (118,631/100k, corroborada por
+> NUSE) y **nunca** fue clasificada `riesgo_alto`, mientras Kennedy (tasa
+> 6× menor) lo fue 75 veces — la correlación entre frecuencia de
+> `riesgo_alto` y tasa real por habitante es **negativa** (r=−0.371). El
+> clustering (basado en tasas) sí identifica correctamente a Candelaria
+> como "alto impacto", generando una contradicción entre las dos capas del
+> mismo mapa. Recomendaciones: no usar `riesgo_alto` para asignar recursos
+> policiales de forma automática, aclarar en el dashboard que riesgo y
+> tipología miden cosas distintas, y no interpretar el indicador como
+> riesgo proporcional para residentes en zonas de alta población flotante.
+
+Texto completo: `docs/auditoria_sesgo.md`.
+
+---
+
+## E. Trazabilidad a criterios de la convocatoria
 
 | Criterio | Evidencia |
 |---|---|
