@@ -37,3 +37,22 @@ La API de ORS devuelve hasta N rutas alternativas con su geometría
 **Credencial:** `ORS_API_KEY` en `.env` (nunca en el repositorio); se lee vía
 `config.ORS_API_KEY`. Conectividad verificada 2026-07-06 (Chapinero → La
 Candelaria: 2 rutas, 5.8 km / 11.2 min y 5.2 km / 12.0 min).
+
+## Framework móvil — Expo (React Native) (Issue #37)
+
+**Framework elegido: Expo (React Native)**, JavaScript (template `blank`).
+
+**Justificación:**
+- Camino más corto de "cero a APK instalable" sin experiencia previa en mobile:
+  **Expo Go** permite probar en un dispositivo físico real escaneando un QR, sin
+  compilar nativo en cada cambio.
+- La API ya está en FastAPI (JSON) — React Native consume JSON nativo sin adaptadores.
+- `expo-location` y `expo-notifications` son los paquetes estándar para GPS y
+  notificaciones locales, con buena documentación y compatibles con Expo Go en
+  desarrollo (issues #39, #40).
+- Si en el checkpoint de contingencia (PWA) se decide cambiar de cliente, la lógica
+  de negocio en JavaScript es reutilizable. El endpoint `/ruta-segura` no cambia.
+
+**Proyecto:** `mobile/` (Expo SDK). Convive con el módulo de geofencing entregado
+por Integrante 2 en `mobile/src/geofencing/` (Issue #21), que el cliente enchufa a
+`expo-location`. Cómo correr y apuntar a la API: `mobile/README.md`.

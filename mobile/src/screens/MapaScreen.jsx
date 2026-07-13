@@ -1,6 +1,159 @@
-import Placeholder from '../components/Placeholder';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import MapView, { Polygon } from 'react-native-maps';
 
-// Mapa coroplético de riesgo por localidad (Issue #38). Placeholder por ahora.
-export default function MapaScreen() {
-  return <Placeholder nombre="Mapa" />;
+import { COLORES } from '../config';
+import { colorPorNivel, fetchZonas, USAR_MOCK } from '../services/zonasService';
+
+// Región inicial: Bogotá.
+const REGION_BOGOTA = {
+  latitude: 4.65,
+  longitude: -74.08,
+  latitudeDelta: 0.15,
+  longitudeDelta: 0.15,
+};
+
+// Ubicación actual hardcodeada (el GPS real llega en #39).
+const ZONA_ACTUAL = { nombre: 'Chapinero', nivel: 'MEDIO' };
+
+// Extrae los anillos exteriores de un feature (Polygon o MultiPolygon).
+function anillosExteriores(feature) {
+  const g = feature?.geometry;
+  if (!g) return [];
+  if (g.type === 'Polygon') return [g.coordinates[0]];
+  if (g.type === 'MultiPolygon') return g.coordinates.map((poly) => poly[0]);
+  return [];
 }
+
+export default function MapaScreen({ navigation }) {
+  const [estado, setEstado] = useState('cargando'); // 'cargando' | 'error' | 'listo'
+  const [zonas, setZonas] = useState([]);
+
+  useLayoutEffect(() => {
+    navigation?.setOptions?.({
+      title: USAR_MOCK ? 'Alerta Ciudadana · Mock' : 'Alerta Ciudadana',
+    });
+  }, [navigation]);
+
+  const cargar = useCallback(async () => {
+    setEstado('cargando');
+    try {
+      const fc = await fetchZonas();
+      setZonas(fc?.features ?? []);
+      setEstado('listo');
+    } catch (e) {
+      console.error('Error cargando zonas:', e);
+      setEstado('error');
+    }
+  }, []);
+
+  useEffect(() => {
+    cargar();
+  }, [cargar]);
+
+  if (estado === 'cargando') {
+    return (
+      <View style={styles.centro}>
+        <ActivityIndicator size="large" color={COLORES.acento} />
+        <Text style={styles.textoSecund}>Cargando mapa de riesgo…</Text>
+      </View>
+    );
+  }
+
+  if (estado === 'error') {
+    return (
+      <View style={styles.centro}>
+        <Text style={styles.textoError}>No se pudo cargar el mapa.</Text>
+        <TouchableOpacity style={styles.botonReintentar} onPress={cargar}>
+          <Text style={styles.textoBoton}>Reintentar</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.contenedor}>
+      <MapView style={styles.mapa} initialRegion={REGION_BOGOTA}>
+        {zonas.flatMap((feature, i) =>
+          anillosExteriores(feature).map((anillo, j) => (
+            <Polygon
+              key={`${feature.properties?.cod_localidad ?? i}-${j}`}
+              coordinates={anillo.map(([lon, lat]) => ({ latitude: lat, longitude: lon }))}
+              fillColor={`${colorPorNivel(feature.properties?.nivel_riesgo)}B3`}
+              strokeColor="#21262D"
+              strokeWidth={1}
+            />
+          )),
+        )}
+      </MapView>
+
+      {/* Chip de ubicación (hardcodeado hasta #39) */}
+      <View style={styles.chip}>
+        <Text style={styles.chipTexto}>
+          📍 {ZONA_ACTUAL.nombre} · Riesgo {ZONA_ACTUAL.nivel}
+        </Text>
+      </View>
+
+      {/* FAB de reporte ciudadano (solo visual hasta #42) */}
+      <TouchableOpacity style={styles.fab} activeOpacity={0.8}>
+        <Text style={styles.fabTexto}>📢</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  contenedor: { flex: 1, backgroundColor: COLORES.fondo },
+  mapa: { flex: 1 },
+  centro: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORES.fondo,
+    padding: 24,
+  },
+  textoSecund: { color: COLORES.textoSecund, marginTop: 12 },
+  textoError: { color: COLORES.riesgoAlto, fontSize: 16, marginBottom: 16 },
+  botonReintentar: {
+    backgroundColor: COLORES.azul,
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  textoBoton: { color: COLORES.textoPrinc, fontWeight: 'bold' },
+  chip: {
+    position: 'absolute',
+    left: 16,
+    bottom: 24,
+    backgroundColor: COLORES.tarjeta,
+    borderColor: COLORES.borde,
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+  },
+  chipTexto: { color: COLORES.textoPrinc, fontSize: 13, fontWeight: '600' },
+  fab: {
+    position: 'absolute',
+    right: 16,
+    bottom: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: COLORES.denuncia,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  fabTexto: { fontSize: 22 },
+});
