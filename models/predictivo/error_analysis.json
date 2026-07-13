@@ -1,0 +1,348 @@
+{
+  "metricas_globales": {
+    "recall_riesgo": 0.967741935483871,
+    "precision_riesgo": 0.5357142857142857,
+    "f1_riesgo": 0.6896551724137931,
+    "matriz_confusion": [
+      [
+        163,
+        26
+      ],
+      [
+        1,
+        30
+      ]
+    ],
+    "n": 220,
+    "n_positivos": 31,
+    "umbral": 0.5597285628318787
+  },
+  "brier_score": 0.1021135225892067,
+  "umbral": 0.5597285628318787,
+  "precision_recall": {
+    "average_precision": 0.7372645422429689,
+    "precision_en_umbral": 0.5357142857142857,
+    "recall_en_umbral": 0.967741935483871
+  },
+  "por_tipo": [
+    {
+      "tipo_delito": "H",
+      "n": 20,
+      "n_positivos": 6,
+      "recall_riesgo": 0.8333333333333334,
+      "f1_riesgo": 0.7692307692307693,
+      "fp": 2,
+      "fn": 1,
+      "tipo_delito_nombre": "Homicidios"
+    },
+    {
+      "tipo_delito": "HM",
+      "n": 20,
+      "n_positivos": 5,
+      "recall_riesgo": 1.0,
+      "f1_riesgo": 1.0,
+      "fp": 0,
+      "fn": 0,
+      "tipo_delito_nombre": "Hurto Motocicletas"
+    },
+    {
+      "tipo_delito": "HA",
+      "n": 20,
+      "n_positivos": 4,
+      "recall_riesgo": 1.0,
+      "f1_riesgo": 0.8888888888888888,
+      "fp": 1,
+      "fn": 0,
+      "tipo_delito_nombre": "Hurto Automotores"
+    },
+    {
+      "tipo_delito": "VI",
+      "n": 20,
+      "n_positivos": 4,
+      "recall_riesgo": 1.0,
+      "f1_riesgo": 0.8888888888888888,
+      "fp": 1,
+      "fn": 0,
+      "tipo_delito_nombre": "Violencia Intrafamiliar"
+    },
+    {
+      "tipo_delito": "DS",
+      "n": 20,
+      "n_positivos": 3,
+      "recall_riesgo": 1.0,
+      "f1_riesgo": 0.5454545454545454,
+      "fp": 5,
+      "fn": 0,
+      "tipo_delito_nombre": "Delitos Sexuales"
+    },
+    {
+      "tipo_delito": "HP",
+      "n": 20,
+      "n_positivos": 3,
+      "recall_riesgo": 1.0,
+      "f1_riesgo": 0.6,
+      "fp": 4,
+      "fn": 0,
+      "tipo_delito_nombre": "Hurto Personas"
+    },
+    {
+      "tipo_delito": "HB",
+      "n": 20,
+      "n_positivos": 3,
+      "recall_riesgo": 1.0,
+      "f1_riesgo": 1.0,
+      "fp": 0,
+      "fn": 0,
+      "tipo_delito_nombre": "Hurto Bicicletas"
+    },
+    {
+      "tipo_delito": "HR",
+      "n": 20,
+      "n_positivos": 2,
+      "recall_riesgo": 1.0,
+      "f1_riesgo": 0.6666666666666666,
+      "fp": 2,
+      "fn": 0,
+      "tipo_delito_nombre": "Hurto Residencias"
+    },
+    {
+      "tipo_delito": "LP",
+      "n": 20,
+      "n_positivos": 1,
+      "recall_riesgo": 1.0,
+      "f1_riesgo": 0.3333333333333333,
+      "fp": 4,
+      "fn": 0,
+      "tipo_delito_nombre": "Lesiones Personales"
+    },
+    {
+      "tipo_delito": "HCE",
+      "n": 20,
+      "n_positivos": 0,
+      "recall_riesgo": null,
+      "f1_riesgo": null,
+      "fp": 2,
+      "fn": 0,
+      "tipo_delito_nombre": "Hurto Celulares"
+    },
+    {
+      "tipo_delito": "HC",
+      "n": 20,
+      "n_positivos": 0,
+      "recall_riesgo": null,
+      "f1_riesgo": null,
+      "fp": 5,
+      "fn": 0,
+      "tipo_delito_nombre": "Hurto Comercio"
+    }
+  ],
+  "por_localidad": [
+    {
+      "cod_localidad": "10",
+      "n": 11,
+      "n_positivos": 7,
+      "recall_riesgo": 1.0,
+      "f1_riesgo": 0.8235294117647058,
+      "fp": 3,
+      "fn": 0,
+      "localidad_nombre": "ENGATIVA"
+    },
+    {
+      "cod_localidad": "11",
+      "n": 11,
+      "n_positivos": 7,
+      "recall_riesgo": 1.0,
+      "f1_riesgo": 0.8235294117647058,
+      "fp": 3,
+      "fn": 0,
+      "localidad_nombre": "SUBA"
+    },
+    {
+      "cod_localidad": "08",
+      "n": 11,
+      "n_positivos": 7,
+      "recall_riesgo": 1.0,
+      "f1_riesgo": 0.7777777777777778,
+      "fp": 4,
+      "fn": 0,
+      "localidad_nombre": "KENNEDY"
+    },
+    {
+      "cod_localidad": "19",
+      "n": 11,
+      "n_positivos": 5,
+      "recall_riesgo": 1.0,
+      "f1_riesgo": 0.9090909090909091,
+      "fp": 1,
+      "fn": 0,
+      "localidad_nombre": "CIUDAD BOLIVAR"
+    },
+    {
+      "cod_localidad": "07",
+      "n": 11,
+      "n_positivos": 2,
+      "recall_riesgo": 1.0,
+      "f1_riesgo": 0.5714285714285714,
+      "fp": 3,
+      "fn": 0,
+      "localidad_nombre": "BOSA"
+    },
+    {
+      "cod_localidad": "16",
+      "n": 11,
+      "n_positivos": 1,
+      "recall_riesgo": 1.0,
+      "f1_riesgo": 1.0,
+      "fp": 0,
+      "fn": 0,
+      "localidad_nombre": "PUENTE ARANDA"
+    },
+    {
+      "cod_localidad": "18",
+      "n": 11,
+      "n_positivos": 1,
+      "recall_riesgo": 1.0,
+      "f1_riesgo": 1.0,
+      "fp": 0,
+      "fn": 0,
+      "localidad_nombre": "RAFAEL URIBE URIBE"
+    },
+    {
+      "cod_localidad": "04",
+      "n": 11,
+      "n_positivos": 1,
+      "recall_riesgo": 0.0,
+      "f1_riesgo": 0.0,
+      "fp": 0,
+      "fn": 1,
+      "localidad_nombre": "SAN CRISTOBAL"
+    },
+    {
+      "cod_localidad": "03",
+      "n": 11,
+      "n_positivos": 0,
+      "recall_riesgo": null,
+      "f1_riesgo": null,
+      "fp": 3,
+      "fn": 0,
+      "localidad_nombre": "SANTA FE"
+    },
+    {
+      "cod_localidad": "02",
+      "n": 11,
+      "n_positivos": 0,
+      "recall_riesgo": null,
+      "f1_riesgo": null,
+      "fp": 2,
+      "fn": 0,
+      "localidad_nombre": "CHAPINERO"
+    },
+    {
+      "cod_localidad": "01",
+      "n": 11,
+      "n_positivos": 0,
+      "recall_riesgo": null,
+      "f1_riesgo": null,
+      "fp": 1,
+      "fn": 0,
+      "localidad_nombre": "USAQUEN"
+    },
+    {
+      "cod_localidad": "05",
+      "n": 11,
+      "n_positivos": 0,
+      "recall_riesgo": null,
+      "f1_riesgo": null,
+      "fp": 2,
+      "fn": 0,
+      "localidad_nombre": "USME"
+    },
+    {
+      "cod_localidad": "12",
+      "n": 11,
+      "n_positivos": 0,
+      "recall_riesgo": null,
+      "f1_riesgo": null,
+      "fp": 0,
+      "fn": 0,
+      "localidad_nombre": "BARRIOS UNIDOS"
+    },
+    {
+      "cod_localidad": "09",
+      "n": 11,
+      "n_positivos": 0,
+      "recall_riesgo": null,
+      "f1_riesgo": null,
+      "fp": 2,
+      "fn": 0,
+      "localidad_nombre": "FONTIBON"
+    },
+    {
+      "cod_localidad": "06",
+      "n": 11,
+      "n_positivos": 0,
+      "recall_riesgo": null,
+      "f1_riesgo": null,
+      "fp": 0,
+      "fn": 0,
+      "localidad_nombre": "TUNJUELITO"
+    },
+    {
+      "cod_localidad": "13",
+      "n": 11,
+      "n_positivos": 0,
+      "recall_riesgo": null,
+      "f1_riesgo": null,
+      "fp": 0,
+      "fn": 0,
+      "localidad_nombre": "TEUSAQUILLO"
+    },
+    {
+      "cod_localidad": "15",
+      "n": 11,
+      "n_positivos": 0,
+      "recall_riesgo": null,
+      "f1_riesgo": null,
+      "fp": 0,
+      "fn": 0,
+      "localidad_nombre": "ANTONIO NARIÑO"
+    },
+    {
+      "cod_localidad": "14",
+      "n": 11,
+      "n_positivos": 0,
+      "recall_riesgo": null,
+      "f1_riesgo": null,
+      "fp": 2,
+      "fn": 0,
+      "localidad_nombre": "LOS MARTIRES"
+    },
+    {
+      "cod_localidad": "17",
+      "n": 11,
+      "n_positivos": 0,
+      "recall_riesgo": null,
+      "f1_riesgo": null,
+      "fp": 0,
+      "fn": 0,
+      "localidad_nombre": "CANDELARIA"
+    },
+    {
+      "cod_localidad": "20",
+      "n": 11,
+      "n_positivos": 0,
+      "recall_riesgo": null,
+      "f1_riesgo": null,
+      "fp": 0,
+      "fn": 0,
+      "localidad_nombre": "SUMAPAZ"
+    }
+  ],
+  "degradacion": {
+    "f1_limpio": 0.6896551724137931,
+    "f1_features_faltantes": 0.725,
+    "f1_features_ruidosas": 0.675,
+    "delta_faltantes": 0.03534482758620683,
+    "delta_ruido": -0.014655172413793105
+  }
+}
