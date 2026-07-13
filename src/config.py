@@ -9,13 +9,20 @@ URLs verificadas contra la API CKAN de datosabiertos.bogota.gov.co el 2026-06-30
 Si una descarga falla, revisar primero si el resource_id cambió en el portal.
 """
 
+import os
 from pathlib import Path
+
+from dotenv import load_dotenv
 
 # --------------------------------------------------------------------------- #
 # Rutas del proyecto
 # --------------------------------------------------------------------------- #
 # config.py vive en src/ → la raíz del repo es el padre.
 ROOT = Path(__file__).resolve().parent.parent
+
+# Carga variables de entorno desde .env (no versionado). Debe ir tras definir
+# ROOT para apuntar al .env de la raíz del repo sin depender del CWD.
+load_dotenv(ROOT / ".env")
 
 DATA = ROOT / "data"
 RAW = DATA / "01_raw"
@@ -34,6 +41,15 @@ ZONAS_GEOJSON = PROCESSED / "zonas_bogota.geojson"
 
 # Diccionarios de datos
 DOCS_DICT = ROOT / "docs" / "data-dictionaries"
+
+# --------------------------------------------------------------------------- #
+# OpenRouteService — routing externo (feature Ruta Más Segura, Issues #45–#48)
+# --------------------------------------------------------------------------- #
+# Motor de routing (OSM) que calcula las rutas navegables entre dos puntos de
+# Bogotá. El perfil (driving-car, foot-walking…) va en la URL: {BASE}/{perfil}/json.
+ORS_BASE_URL = "https://api.openrouteservice.org/v2/directions"
+# Token del plan gratuito de ORS. Se lee del entorno (.env, NUNCA en el repo).
+ORS_API_KEY = os.getenv("ORS_API_KEY", "")
 
 
 def ensure_dirs() -> None:
