@@ -18,4 +18,10 @@ seaborn==0.13.2
 scipy==1.18.0          # EDA/#25 — regresión de tendencia (linregress) + dendrograma jerárquico
 scikit-learn==1.9.0    # #27 — K-Means + silhouette para el clustering de perfiles de zona
 joblib==1.5.3          # #27 — serializar clusters.joblib
-xgboost==3.3.0         # #18 — Gradient Boosting del modelo predictivo 
+xgboost==3.3.0         # #18 — Gradient Boosting del modelo predictivo
+
+# API ligera (Issue #20 — Integrante 2)
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+httpx>=0.27.0          # TestClient de FastAPI / starlette
+
