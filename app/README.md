@@ -14,25 +14,44 @@ en la Issue #36.
 
 Abre <http://localhost:8501>.
 
-## Las 3 capas del mapa (Issue #33)
+## Las 3 capas del mapa (Issues #33, #34)
 
-Los datos de las 3 capas son **reales**, no un mock (a diferencia del
-scaffold inicial de la Issue #32, ya retirado — `app/mock_data/` no existe
-más):
-
-1. **Riesgo por zona**: colorea cada localidad según `riesgo_alto`
-   (percentil 75 histórico de `conteo_siedco`, calculado en la Issue #10 —
-   **no** es la probabilidad del modelo predictivo real, Issue #19, que
-   Integrante 2 aún no ha implementado). El selector de año/tipo de delito
-   del sidebar sí funciona: cambia de verdad el coroplético.
+1. **Riesgo por zona**: colorea cada localidad según `nivel_riesgo`
+   (`"bajo"|"medio"|"alto"`), calculado por el **modelo predictivo real**
+   (Random Forest/XGBoost, Issue #19) y servido en vivo por
+   `GET /zonas-riesgo` (Issue #20) — no hay ningún mock ni fixture local
+   para esta capa desde la Issue #34. El selector de año/tipo de delito del
+   sidebar re-consulta la API de verdad. Requiere que la API esté corriendo
+   (`uvicorn api.main:app`, ver más abajo) — si no responde, el dashboard
+   muestra un error claro en vez de romperse.
 2. **Densidad NUSE**: llamadas al 123 por localidad, coloreadas con una
    escala continua. *Limitación conocida:* el dato abierto real trae
    resolución de UPZ (más fina que localidad), pero el pipeline nunca
    ingirió la geometría de esas UPZ (solo la de localidad, Issue #5) — la
    capa muestra el agregado a nivel localidad. Ingerir geometría real de UPZ
-   queda como trabajo futuro para Integrante 1.
+   queda como trabajo futuro para Integrante 1. Esta capa **no** viene de
+   la API (NUSE no forma parte de su contrato, ver `CLAUDE.md` §4) — sigue
+   leyendo el fixture local `app/data/nuse_por_zona.json`.
 3. **Tipología de zonas**: colorea por el perfil de K-Means real (Issue
-   #27), con tooltip en lenguaje no técnico.
+   #27), con tooltip en lenguaje no técnico — viene de la misma respuesta
+   de `GET /zonas-riesgo` que la capa de riesgo.
+
+## Cómo correr con la API real (Issue #34)
+
+El dashboard necesita la API corriendo para la capa de riesgo/tipología:
+
+```bash
+# Terminal 1 — API (necesita los artefactos entrenados, ver api/README.md)
+.venv/Scripts/python -m uvicorn api.main:app --host 0.0.0.0 --port 8000
+
+# Terminal 2 — dashboard
+.venv/Scripts/pip install -r app/requirements.txt
+.venv/Scripts/streamlit run app/streamlit_app.py
+```
+
+Por defecto el dashboard apunta a `http://localhost:8000`. Para apuntar a
+otra URL (ej. la API corriendo en otra máquina de la red), define la
+variable de entorno `ALERTA_API_URL` antes de correr `streamlit run`.
 
 La capa de riesgo siempre está visible (es la capa base); activa/desactiva
 NUSE y tipología con los checkboxes del sidebar, no con un control flotante
@@ -61,10 +80,12 @@ dependencia de `geopandas` del pipeline).
 
 ## Datos: `app/data/`
 
-Los 4 archivos en `app/data/*.json`/`*.geojson` están **commiteados** (a
-diferencia de `data/`, que es gitignored) para que cualquiera del equipo
-corra el dashboard sin haber corrido el pipeline completo. Se generaron una
-sola vez con datos reales:
+Los 3 archivos en `app/data/*.json`/`*.geojson` están **commiteados** (a
+diferencia de `data/`, que es gitignored) — los sigue necesitando la capa
+NUSE (`geometria_localidades.geojson`, `nuse_por_zona.json`) y el reporte
+ciudadano (`linea_base_zscore.json`, Issue #36). La capa de riesgo/tipología
+ya **no** usa un fixture local (retirado en la Issue #34) — viene de la API
+real. Se generan una sola vez con datos reales:
 
 ```bash
 .venv/Scripts/python app/data/generar_datasets_mapa.py
@@ -75,8 +96,3 @@ sola vez con datos reales:
 `pandas`/`geopandas`, vía el `requirements.txt` raíz del repo, no el de
 `app/`. Solo hace falta regenerarlo si cambian los datos o el clustering
 reales.)
-
-La Issue #34 reemplaza `cargar_zonas_riesgo()` (en `app/data_loader.py`) por
-una llamada real a `GET /zonas-riesgo` (Issue #20) — `cargar_densidad_nuse()`
-se queda local para siempre, porque NUSE no forma parte del contrato de esa
-API (ver `CLAUDE.md` §4).
