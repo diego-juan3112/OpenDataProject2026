@@ -11,6 +11,7 @@ import MapView, { Polygon } from 'react-native-maps';
 
 import { COLORES } from '../config';
 import { useUbicacion } from '../context/UbicacionContext';
+import { useAlertaRiesgo } from '../context/AlertaRiesgoContext';
 import { colorPorNivel, fetchZonas, USAR_MOCK } from '../services/zonasService';
 
 // Región inicial: Bogotá.
@@ -35,6 +36,7 @@ export default function MapaScreen({ navigation }) {
   const [estado, setEstado] = useState('cargando'); // 'cargando' | 'error' | 'listo'
   const [zonas, setZonas] = useState([]);
   const { posicion, modoDemo } = useUbicacion();
+  const { zonaActual, nivelActual } = useAlertaRiesgo(); // zona/nivel resuelto (#40)
 
   useLayoutEffect(() => {
     navigation?.setOptions?.({
@@ -94,20 +96,28 @@ export default function MapaScreen({ navigation }) {
         )}
       </MapView>
 
-      {/* Chip de posición: GPS real o modo demo (#39). Resolver la
-          coordenada a zona/nivel de riesgo real es la Issue #40. */}
+      {/* Chip de posición: muestra la zona/nivel resuelto (#40); si no hay
+          zona (fuera de Bogotá) cae a las coordenadas crudas. */}
       <TouchableOpacity
         style={styles.chip}
         activeOpacity={posicion ? 1 : 0.7}
         onPress={() => !posicion && navigation?.navigate?.('Perfil')}
       >
-        <Ionicons name="location-sharp" size={14} color={COLORES.textoPrinc} />
+        <Ionicons
+          name="location-sharp"
+          size={14}
+          color={nivelActual ? colorPorNivel(nivelActual) : COLORES.textoPrinc}
+        />
         <Text style={styles.chipTexto}>
-          {posicion
-            ? `${posicion.lat.toFixed(4)}, ${posicion.lon.toFixed(4)} · ${
-                modoDemo ? 'Modo demo' : 'GPS activo'
-              }`
-            : 'Ubicación desactivada · Actívala en Perfil'}
+          {!posicion
+            ? 'Ubicación desactivada · Actívala en Perfil'
+            : zonaActual && !zonaActual.fueraDeBogota
+              ? `${zonaActual.localidad_nombre} · Riesgo ${(nivelActual ?? '—').toUpperCase()}${
+                  modoDemo ? ' · Demo' : ''
+                }`
+              : `${posicion.lat.toFixed(4)}, ${posicion.lon.toFixed(4)} · ${
+                  modoDemo ? 'Modo demo' : 'GPS activo'
+                }`}
         </Text>
       </TouchableOpacity>
 

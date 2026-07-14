@@ -30,14 +30,27 @@ npx expo start --tunnel
 
 El teléfono debe estar en la **misma red Wi-Fi** que el computador.
 
-## Cómo apuntar a la API
+## Cómo apuntar a la API (`.env`)
 
-Editar `src/config.js` → `API_BASE_URL`:
-- **IP de LAN** (misma Wi-Fi): `http://192.168.x.x:8000`
-  Obtener la IP del backend con `ipconfig` (Windows) o `ifconfig` (Mac/Linux).
-  Es dinámica: cambia si cambia la red — actualízala aquí cuando toque.
-- **Túnel ngrok** (útil para la demo, URL estable): `https://xxxx.ngrok.io`
-  Ejecutar `ngrok http 8000` en el computador del backend.
+La URL de la API y el modo mock se leen de **`mobile/.env`** (no versionado).
+Copia la plantilla y ajústala:
+
+```bash
+cp .env.example .env     # Windows: copy .env.example .env
+```
+
+`mobile/.env`:
+```
+EXPO_PUBLIC_API_BASE_URL=http://192.168.x.x:8000   # IP de LAN del PC (ipconfig → Wi-Fi), puerto 8000
+EXPO_PUBLIC_USAR_MOCK=false                        # false = API real · true = mock
+```
+
+- **IP de LAN** (misma Wi-Fi): la del adaptador **Wi-Fi** en `ipconfig`/`ifconfig`
+  (no la de adaptadores virtuales tipo `192.168.56.x`). Es dinámica: si cambia la
+  red, actualiza el `.env`.
+- **Túnel ngrok** (URL estable para la demo): `ngrok http 8000` en el PC y pon
+  `https://xxxx.ngrok.io` en `EXPO_PUBLIC_API_BASE_URL`.
+- Tras editar el `.env`, reinicia con caché limpia: `npx expo start -c`.
 
 ## Estructura
 
@@ -67,13 +80,28 @@ GeoJSON y resuelve en qué localidad está el usuario + su nivel de riesgo. La a
 import { ZonasCache, riesgoDeCoordenada } from './src/geofencing';
 ```
 
-## Build instalable (APK) — Issue #42
+## Consumir la API real + build instalable (APK) — Issue #42
+
+Por defecto (sin `.env`) el mapa usa datos de prueba (mock). Para consumir la
+**API real**, configura `mobile/.env` (ver *"Cómo apuntar a la API"* arriba):
+
+1. Levanta la API en la LAN (ver `README.md` raíz) y anota su IP (`ipconfig`).
+2. En `mobile/.env`: `EXPO_PUBLIC_API_BASE_URL=http://<IP-LAN>:8000` y
+   `EXPO_PUBLIC_USAR_MOCK=false`.
+3. Reinicia con caché limpia: `npx expo start -c`. Con eso el mapa, el chip y las
+   alertas usan `GET /zonas-riesgo` real (mismo shape que el mock, nada más cambia).
+
+**Build APK instalable** (requiere una cuenta Expo; el build corre en la nube de
+EAS, perfil `preview` definido en `eas.json`):
 
 ```bash
 npm install -g eas-cli
 eas login
 eas build -p android --profile preview
 ```
+
+Al terminar, EAS entrega un enlace para descargar e instalar el APK en el
+teléfono (o `eas build:run -p android` para instalarlo por USB).
 
 ## Privacidad y ubicación (Issue #39)
 
@@ -84,10 +112,30 @@ memoria (`UbicacionContext`, sin `AsyncStorage`): se resetean al cerrar la
 app.
 
 Si el permiso se deniega (o el dispositivo no tiene GPS disponible), la tab
-Perfil ofrece un switch de **"modo demo"** que fija una coordenada simulada de
-Bogotá — sin ruta ni animación (eso llega en la Issue #41). El chip de
-`MapaScreen` muestra la coordenada cruda (real o demo); resolverla a
-localidad/nivel de riesgo real es la Issue #40.
+Perfil ofrece un switch de **"modo demo"** (ver abajo). El chip de `MapaScreen`
+muestra la **localidad y el nivel de riesgo** resueltos por el geofencing (#21).
+
+## Alertas y modo demo (Issues #40–#41)
+
+**Alerta local (#40).** `AlertaRiesgoProvider` observa la posición (GPS o demo),
+la resuelve a localidad con el geofencing (#21) y, **al entrar a una zona de
+riesgo alto**, dispara una notificación local (`expo-notifications`). Es
+anti-rebote: solo notifica en la **transición** a "alto" y se re-arma al salir
+(lógica pura en `src/logic/alertaRiesgo.js`, testeada). La tab **Alertas**
+muestra el estado del permiso, tu zona/nivel actual y el historial de alertas.
+
+**Modo demo (#41) — guion para la presentación:**
+
+1. (Opcional) Concede notificaciones la primera vez que abras la tab **Alertas**.
+2. Ve a **Perfil** y activa el switch **"Modo demo (recorrido simulado)"**.
+3. La app reproduce una ruta **Usaquén (bajo) → Chapinero (medio) → Kennedy
+   (alto)**, un punto cada ~2,5 s. El chip de **Mapa** va cambiando de nivel.
+4. Al cruzar a **Kennedy (riesgo alto)** salta la **notificación local**
+   "⚠️ Zona de riesgo ALTO" y aparece en el historial de **Alertas**.
+5. Desactiva el switch para volver al GPS real (o a "ubicación desactivada").
+
+No depende de moverse físicamente ni de la red → la alerta se dispara de forma
+reproducible en la demo en vivo.
 
 ### Tests
 
@@ -113,7 +161,8 @@ npm test
 4. Denegar el permiso (probar en una segunda instalación o revocándolo desde
    Ajustes del sistema y reabriendo la app): Perfil debe mostrar el mensaje
    de error claro, sin que la app se rompa.
-5. Activar el switch **"Modo demo"**: el chip de Mapa debe cambiar a la
-   coordenada fija con `· Modo demo`, y desactivarlo debe volver a
-   "Ubicación desactivada" (si no hay permiso real) o a la posición GPS (si
-   sí lo hay).
+5. Activar el switch **"Modo demo"**: el chip de Mapa debe recorrer las zonas
+   (bajo → medio → alto); al llegar a **Kennedy** debe **saltar la notificación
+   local** de riesgo alto y registrarse en la tab **Alertas**. Desactivarlo
+   vuelve al GPS real (si hay permiso) o a "ubicación desactivada".
+6. Permanecer en la zona alta: **no** debe repetir la notificación (anti-rebote).

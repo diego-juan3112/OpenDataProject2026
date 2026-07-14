@@ -8,18 +8,29 @@
 import { createContext, useCallback, useContext, useEffect, useReducer, useRef } from 'react';
 
 import { ESTADO_INICIAL, ubicacionReducer } from './ubicacionReducer';
-import { COORDENADA_DEMO, pedirPermiso, suscribirPosicion } from '../services/ubicacionService';
+import { RUTA_DEMO, pedirPermiso, suscribirPosicion } from '../services/ubicacionService';
 
 const UbicacionContext = createContext(null);
+
+// Intervalo entre puntos de la ruta demo (ms).
+const PASO_DEMO_MS = 2500;
 
 export function UbicacionProvider({ children }) {
   const [estado, dispatch] = useReducer(ubicacionReducer, ESTADO_INICIAL);
   const suscripcionRef = useRef(null);
+  const demoTimerRef = useRef(null);
 
   const detenerSuscripcion = useCallback(() => {
     if (suscripcionRef.current) {
       suscripcionRef.current.remove();
       suscripcionRef.current = null;
+    }
+  }, []);
+
+  const detenerDemo = useCallback(() => {
+    if (demoTimerRef.current) {
+      clearInterval(demoTimerRef.current);
+      demoTimerRef.current = null;
     }
   }, []);
 
@@ -44,10 +55,24 @@ export function UbicacionProvider({ children }) {
 
   const activarModoDemo = useCallback(() => {
     detenerSuscripcion();
-    dispatch({ type: 'ACTIVAR_MODO_DEMO', payload: COORDENADA_DEMO });
-  }, [detenerSuscripcion]);
+    detenerDemo();
+    // Reproduce la ruta simulada (#41): un punto cada PASO_DEMO_MS, de zona
+    // segura a zona alta. Cada ACTIVAR_MODO_DEMO mantiene modoDemo=true y
+    // actualiza la posición → AlertaRiesgoContext dispara la alerta al cruzar.
+    let i = 0;
+    dispatch({ type: 'ACTIVAR_MODO_DEMO', payload: RUTA_DEMO[0] });
+    demoTimerRef.current = setInterval(() => {
+      i += 1;
+      if (i >= RUTA_DEMO.length) {
+        detenerDemo(); // se queda en la última coordenada (zona alta)
+        return;
+      }
+      dispatch({ type: 'ACTIVAR_MODO_DEMO', payload: RUTA_DEMO[i] });
+    }, PASO_DEMO_MS);
+  }, [detenerSuscripcion, detenerDemo]);
 
   const desactivarModoDemo = useCallback(async () => {
+    detenerDemo();
     dispatch({ type: 'DESACTIVAR_MODO_DEMO' });
     // Si el permiso ya estaba concedido, retoma el GPS real en vez de dejar
     // al usuario sin posición hasta reabrir la app.
@@ -60,8 +85,13 @@ export function UbicacionProvider({ children }) {
     }
   }, [estado.permiso]);
 
-  // Cancela la suscripción de GPS al desmontar el provider (cierre de la app).
-  useEffect(() => detenerSuscripcion, [detenerSuscripcion]);
+  // Cancela la suscripción de GPS y el timer de la demo al desmontar el provider.
+  useEffect(() => {
+    return () => {
+      detenerSuscripcion();
+      detenerDemo();
+    };
+  }, [detenerSuscripcion, detenerDemo]);
 
   const valor = {
     ...estado,

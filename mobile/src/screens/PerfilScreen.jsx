@@ -76,13 +76,17 @@ export default function PerfilScreen() {
 
       <View style={styles.tarjeta}>
         <View style={styles.filaSwitch}>
-          <Text style={styles.texto}>Modo demo (ubicación simulada)</Text>
+          <Text style={styles.texto}>Modo demo (recorrido simulado)</Text>
           <Switch
             value={modoDemo}
             onValueChange={(valor) => (valor ? activarModoDemo() : desactivarModoDemo())}
             trackColor={{ false: COLORES.borde, true: COLORES.acento }}
           />
         </View>
+        <Text style={styles.textoSecund}>
+          Simula un recorrido de una zona segura a una de riesgo alto (Kennedy) para
+          disparar la alerta sin moverte. La notificación salta al cruzar a la zona alta.
+        </Text>
       </View>
     </View>
   );

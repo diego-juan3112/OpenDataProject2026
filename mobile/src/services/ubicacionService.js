@@ -6,10 +6,23 @@
 
 import * as Location from 'expo-location';
 
-// Coordenada fija provisional (Chapinero) para el "modo demo" de esta issue.
-// La Issue #41 la reemplaza por la ruta simulada real, coordinada con
-// Integrante 3 a partir del modelo/tipología de zonas.
-export const COORDENADA_DEMO = { lat: 4.6492, lon: -74.0628, precision: null };
+// Ruta simulada del "modo demo" (Issue #41): recorre de una zona segura a una
+// de riesgo alto para disparar la alerta de forma reproducible en la
+// presentación, sin depender de moverse físicamente. Los puntos se eligen a
+// partir del modelo/tipología (Int. 3): Kennedy es la localidad de mayor score.
+//   Usaquén (bajo) → Chapinero (medio) → Kennedy (ALTO → dispara la alerta).
+// UbicacionContext reproduce estos puntos uno por uno; al cruzar a "alto",
+// AlertaRiesgoContext dispara la notificación local (#40).
+export const RUTA_DEMO = [
+  { lat: 4.70, lon: -74.03, precision: null }, // Usaquén — bajo (inicio seguro)
+  { lat: 4.66, lon: -74.05, precision: null }, // en tránsito
+  { lat: 4.65, lon: -74.06, precision: null }, // Chapinero — medio
+  { lat: 4.64, lon: -74.10, precision: null }, // en tránsito
+  { lat: 4.63, lon: -74.15, precision: null }, // Kennedy — ALTO → alerta
+];
+
+// Primer punto de la ruta (compatibilidad con quien importe la coord. inicial).
+export const COORDENADA_DEMO = RUTA_DEMO[0];
 
 export async function pedirPermiso() {
   const { status } = await Location.requestForegroundPermissionsAsync();

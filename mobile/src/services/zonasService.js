@@ -11,8 +11,10 @@
 import { ZonasCache } from '../geofencing';
 import { API_BASE_URL } from '../config';
 
-// Cambiar a false cuando la API esté disponible en la sesión (misma Wi-Fi).
-export const USAR_MOCK = true;
+// true = datos de prueba (mock); false = consumir la API real.
+// Se lee de EXPO_PUBLIC_USAR_MOCK (mobile/.env). Por defecto mock, para que un
+// clon nuevo sin .env funcione sin la API. Poner "false" para la entrega/demo.
+export const USAR_MOCK = (process.env.EXPO_PUBLIC_USAR_MOCK ?? 'true') !== 'false';
 
 // Cache real reutilizando el módulo de geofencing (#21): fetch + TTL + fallback
 // offline. Se instancia una vez a nivel de módulo.

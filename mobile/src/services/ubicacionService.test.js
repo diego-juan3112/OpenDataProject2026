@@ -5,7 +5,7 @@ jest.mock('expo-location', () => ({
 }));
 
 import * as Location from 'expo-location';
-import { pedirPermiso, suscribirPosicion, COORDENADA_DEMO } from './ubicacionService';
+import { pedirPermiso, suscribirPosicion, COORDENADA_DEMO, RUTA_DEMO } from './ubicacionService';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -58,7 +58,14 @@ describe('suscribirPosicion', () => {
   });
 });
 
-test('COORDENADA_DEMO es una coordenada valida dentro de Bogota', () => {
-  expect(COORDENADA_DEMO.lat).toBeCloseTo(4.6492, 2);
-  expect(COORDENADA_DEMO.lon).toBeCloseTo(-74.0628, 2);
+test('RUTA_DEMO recorre coordenadas validas dentro de Bogota (#41)', () => {
+  expect(RUTA_DEMO.length).toBeGreaterThanOrEqual(2);
+  // COORDENADA_DEMO es el primer punto de la ruta (compatibilidad).
+  expect(COORDENADA_DEMO).toEqual(RUTA_DEMO[0]);
+  for (const p of RUTA_DEMO) {
+    expect(p.lat).toBeGreaterThanOrEqual(3.7);
+    expect(p.lat).toBeLessThanOrEqual(4.9);
+    expect(p.lon).toBeGreaterThanOrEqual(-74.5);
+    expect(p.lon).toBeLessThanOrEqual(-73.9);
+  }
 });

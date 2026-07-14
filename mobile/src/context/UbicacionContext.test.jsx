@@ -3,11 +3,18 @@ import { create, act } from 'react-test-renderer';
 import { UbicacionProvider, useUbicacion } from './UbicacionContext';
 import * as ubicacionService from '../services/ubicacionService';
 
-jest.mock('../services/ubicacionService', () => ({
-  pedirPermiso: jest.fn(),
-  suscribirPosicion: jest.fn(),
-  COORDENADA_DEMO: { lat: 4.6492, lon: -74.0628, precision: null },
-}));
+jest.mock('../services/ubicacionService', () => {
+  const ruta = [
+    { lat: 4.70, lon: -74.03, precision: null }, // inicio (zona segura)
+    { lat: 4.63, lon: -74.15, precision: null }, // fin (zona alta)
+  ];
+  return {
+    pedirPermiso: jest.fn(),
+    suscribirPosicion: jest.fn(),
+    RUTA_DEMO: ruta,
+    COORDENADA_DEMO: ruta[0],
+  };
+});
 
 let valorActual;
 function Consumidor() {
@@ -81,7 +88,7 @@ test('activarModoDemo fija la posicion demo y detiene la suscripcion GPS activa'
   const remove = jest.fn();
   ubicacionService.suscribirPosicion.mockResolvedValue({ remove });
 
-  montar();
+  const raiz = montar();
   await act(async () => {
     await valorActual.aceptarConsentimiento();
   });
@@ -92,7 +99,10 @@ test('activarModoDemo fija la posicion demo y detiene la suscripcion GPS activa'
 
   expect(remove).toHaveBeenCalledTimes(1);
   expect(valorActual.modoDemo).toBe(true);
-  expect(valorActual.posicion).toEqual({ lat: 4.6492, lon: -74.0628, precision: null });
+  // La ruta demo (#41) arranca en su primer punto (zona segura).
+  expect(valorActual.posicion).toEqual(ubicacionService.RUTA_DEMO[0]);
+
+  act(() => raiz.unmount()); // limpia el intervalo de la ruta demo
 });
 
 test('desactivarModoDemo limpia la posicion', async () => {
