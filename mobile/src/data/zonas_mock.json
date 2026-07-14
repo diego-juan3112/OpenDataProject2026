@@ -1,0 +1,106 @@
+{
+  "type": "FeatureCollection",
+  "_nota": "MOCK de desarrollo (#38). Mismo shape que GET /zonas-riesgo (ver src/geofencing/CONTRATO.md): properties.nivel_riesgo en minúsculas. Polígonos = cajas aproximadas alrededor del centroide, NO los límites reales (esos llegan de la API).",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "cod_localidad": "01",
+        "localidad_nombre": "USAQUEN",
+        "nivel_riesgo": "bajo",
+        "probabilidad_riesgo": 0.18,
+        "riesgo_predicho": 0,
+        "cluster": 0,
+        "nombre_perfil": "perfil bajo incidente",
+        "cod_dane_mpio": "11001",
+        "anio": 2025,
+        "tipo_delito": "HP",
+        "tipo_delito_nombre": "Hurto Personas"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[-74.05, 4.68], [-74.01, 4.68], [-74.01, 4.72], [-74.05, 4.72], [-74.05, 4.68]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cod_localidad": "02",
+        "localidad_nombre": "CHAPINERO",
+        "nivel_riesgo": "medio",
+        "probabilidad_riesgo": 0.52,
+        "riesgo_predicho": 0,
+        "cluster": 1,
+        "nombre_perfil": "perfil hurto medio",
+        "cod_dane_mpio": "11001",
+        "anio": 2025,
+        "tipo_delito": "HP",
+        "tipo_delito_nombre": "Hurto Personas"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[-74.08, 4.63], [-74.04, 4.63], [-74.04, 4.67], [-74.08, 4.67], [-74.08, 4.63]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cod_localidad": "08",
+        "localidad_nombre": "KENNEDY",
+        "nivel_riesgo": "alto",
+        "probabilidad_riesgo": 0.91,
+        "riesgo_predicho": 1,
+        "cluster": 2,
+        "nombre_perfil": "perfil hurto intensivo",
+        "cod_dane_mpio": "11001",
+        "anio": 2025,
+        "tipo_delito": "HP",
+        "tipo_delito_nombre": "Hurto Personas"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[-74.18, 4.60], [-74.12, 4.60], [-74.12, 4.66], [-74.18, 4.66], [-74.18, 4.60]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cod_localidad": "14",
+        "localidad_nombre": "LOS MARTIRES",
+        "nivel_riesgo": "alto",
+        "probabilidad_riesgo": 0.80,
+        "riesgo_predicho": 1,
+        "cluster": 2,
+        "nombre_perfil": "perfil hurto intensivo",
+        "cod_dane_mpio": "11001",
+        "anio": 2025,
+        "tipo_delito": "HP",
+        "tipo_delito_nombre": "Hurto Personas"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[-74.10, 4.59], [-74.08, 4.59], [-74.08, 4.61], [-74.10, 4.61], [-74.10, 4.59]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cod_localidad": "20",
+        "localidad_nombre": "SUMAPAZ",
+        "nivel_riesgo": "bajo",
+        "probabilidad_riesgo": 0.02,
+        "riesgo_predicho": 0,
+        "cluster": 0,
+        "nombre_perfil": "perfil bajo incidente",
+        "cod_dane_mpio": "11001",
+        "anio": 2025,
+        "tipo_delito": "HP",
+        "tipo_delito_nombre": "Hurto Personas"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[-74.40, 4.10], [-74.20, 4.10], [-74.20, 4.30], [-74.40, 4.30], [-74.40, 4.10]]]
+      }
+    }
+  ]
+}
