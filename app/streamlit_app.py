@@ -1,15 +1,14 @@
 """
-streamlit_app.py — Issue #33 (reemplaza el mapa de un solo layer de la Issue #32)
+streamlit_app.py — Issue #34 (conecta el coropletico de riesgo a la API real)
 
-Dashboard analitico de Alerta Ciudadana. 3 capas reales, togglables:
-coropletico de riesgo (percentil historico, #10, siempre visible), densidad
-NUSE (agregada a nivel localidad -- no existe geometria real de UPZ, ver
-app/README.md) y tipologia de zonas (K-Means real, #27), estas dos ultimas
-activables con checkboxes del sidebar (no con el LayerControl nativo de
-Leaflet, para mantener un solo lugar de controles consistente con el resto
-de la app). La Issue #34 reemplaza cargar_zonas_riesgo() por la API real
-GET /zonas-riesgo (#20); cargar_densidad_nuse() se queda local para siempre
-(NUSE no forma parte del contrato de esa API).
+Dashboard analitico de Alerta Ciudadana. 3 capas, togglables: coropletico
+de riesgo (modelo predictivo REAL via GET /zonas-riesgo, #20, #34, siempre
+visible), densidad NUSE (agregada a nivel localidad -- no existe geometria
+real de UPZ, ver app/README.md) y tipologia de zonas (K-Means real, #27),
+estas dos ultimas activables con checkboxes del sidebar (no con el
+LayerControl nativo de Leaflet, para mantener un solo lugar de controles
+consistente con el resto de la app). cargar_densidad_nuse() se queda local
+para siempre (NUSE no forma parte del contrato de esa API).
 """
 from __future__ import annotations
 
@@ -24,7 +23,7 @@ from streamlit_folium import st_folium
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 import config
 
-from data_loader import cargar_zonas_riesgo, cargar_densidad_nuse, cargar_linea_base
+from data_loader import API_BASE_URL, cargar_zonas_riesgo, cargar_densidad_nuse, cargar_linea_base
 from reporte_ciudadano import render_formulario_reporte
 
 # Cubre las 20 localidades reales (incluida la rural Sumapaz al sur),
@@ -32,7 +31,7 @@ from reporte_ciudadano import render_formulario_reporte
 # lon [-74.4498, -73.9865], lat [3.7310, 4.8368]
 LIMITES_BOGOTA = [[3.7310, -74.4498], [4.8368, -73.9865]]
 
-COLOR_RIESGO = {1: "#e74c3c", 0: "#2ecc71"}
+COLOR_RIESGO = {"bajo": "#2ecc71", "medio": "#f1c40f", "alto": "#e74c3c"}
 COLOR_TIPOLOGIA = {
     "Perfil de alto impacto generalizado": "#c0392b",
     "Perfil hurto de bienes / ingreso alto": "#f39c12",
@@ -42,8 +41,8 @@ ICONO_POR_ATIPICO = {True: ("triangle-exclamation", "red"), False: ("circle-chec
 
 
 def _estilo_riesgo(feature: dict) -> dict:
-    riesgo_alto = feature["properties"]["riesgo_alto"]
-    return {"fillColor": COLOR_RIESGO[riesgo_alto], "color": "#555555", "weight": 1, "fillOpacity": 0.6}
+    nivel = feature["properties"]["nivel_riesgo"]
+    return {"fillColor": COLOR_RIESGO.get(nivel, "#95a5a6"), "color": "#555555", "weight": 1, "fillOpacity": 0.6}
 
 
 def _estilo_tipologia(feature: dict) -> dict:
@@ -65,15 +64,18 @@ def main() -> None:
             "Año", options=list(range(config.ANIO_MIN, config.ANIO_MAX + 1)), value=config.ANIO_MAX
         )
         st.caption(
-            "El coroplético de riesgo usa un umbral histórico (percentil 75 "
-            "de incidentes), no el modelo predictivo real — se conecta a la "
-            "API real en la Issue #34."
+            f"El coroplético de riesgo viene del modelo predictivo real, "
+            f"vía la API en {API_BASE_URL}."
         )
         st.divider()
         mostrar_nuse = st.checkbox("Mostrar densidad NUSE", value=False)
         mostrar_tipologia = st.checkbox("Mostrar tipología de zonas", value=False)
 
-    zonas_riesgo = cargar_zonas_riesgo(anio, tipo_codigo)
+    try:
+        zonas_riesgo = cargar_zonas_riesgo(anio, tipo_codigo)
+    except RuntimeError as exc:
+        st.error(str(exc))
+        st.stop()
 
     mapa = folium.Map()
     mapa.fit_bounds(LIMITES_BOGOTA)
@@ -82,8 +84,8 @@ def main() -> None:
         zonas_riesgo,
         style_function=_estilo_riesgo,
         tooltip=folium.GeoJsonTooltip(
-            fields=["localidad_nombre", "riesgo_alto", "conteo_siedco"],
-            aliases=["Localidad", "¿Riesgo alto?", "Incidentes registrados"],
+            fields=["localidad_nombre", "tipo_delito_nombre", "nivel_riesgo", "probabilidad_riesgo"],
+            aliases=["Localidad", "Tipo de delito", "Nivel de riesgo", "Probabilidad"],
         ),
     ).add_to(mapa)
 

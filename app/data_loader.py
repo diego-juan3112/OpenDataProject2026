@@ -1,35 +1,30 @@
 """
-data_loader.py — Issue #33 (reemplaza la funcion de mock de la Issue #32)
+data_loader.py — Issue #34 (reemplaza el fixture local de riesgo/tipologia
+de la Issue #33 por la API real)
 
-Carga los datos de las 3 capas del mapa desde app/data/ (generado por
-app/data/generar_datasets_mapa.py, Issue #33 -- todos los valores son
-reales, ver ese script y el spec de #33 para el detalle). Combina la
-geometria (que no cambia) con los atributos del anio/tipo de delito
-seleccionados, en tiempo de render.
-
-cargar_zonas_riesgo(anio, tipo_delito) tiene la misma forma que tendra el
-contrato real de GET /zonas-riesgo (#20, ver CLAUDE.md ss4) -- es la UNICA
-funcion que la Issue #34 reemplaza por una llamada HTTP real, ahora
-parametrizada de verdad (en #32 no tomaba parametros porque el mock era
-estatico).
-
-cargar_densidad_nuse(anio) es local siempre: NUSE no forma parte del
-contrato de /zonas-riesgo (CLAUDE.md la describe como una capa propia del
-dashboard, no del endpoint unico), asi que la Issue #34 no la toca.
+cargar_zonas_riesgo() llama a la API real GET /zonas-riesgo (#20, de
+Integrante 2) -- ya no lee fixtures locales de riesgo/tipologia (esos
+quedaron obsoletos y se retiraron en esta issue, ver
+app/data/generar_datasets_mapa.py). cargar_densidad_nuse() y
+cargar_linea_base() SIGUEN leyendo fixtures locales: NUSE no forma parte
+del contrato de la API (CLAUDE.md ss4) y la linea base del reporte
+ciudadano (#36) tampoco.
 """
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
+import requests
 import streamlit as st
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
 GEOMETRIA_PATH = DATA_DIR / "geometria_localidades.geojson"
-RIESGO_PATH = DATA_DIR / "riesgo_por_zona.json"
-TIPOLOGIA_PATH = DATA_DIR / "tipologia_zonas.json"
 NUSE_PATH = DATA_DIR / "nuse_por_zona.json"
 LINEA_BASE_PATH = DATA_DIR / "linea_base_zscore.json"
+
+API_BASE_URL = os.environ.get("ALERTA_API_URL", "http://localhost:8000")
 
 
 @st.cache_data
@@ -39,53 +34,37 @@ def _cargar_geometria() -> dict:
 
 
 @st.cache_data
-def _cargar_riesgo() -> list[dict]:
-    with open(RIESGO_PATH, encoding="utf-8") as f:
-        return json.load(f)
-
-
-@st.cache_data
-def _cargar_tipologia() -> list[dict]:
-    with open(TIPOLOGIA_PATH, encoding="utf-8") as f:
-        return json.load(f)
-
-
-@st.cache_data
 def _cargar_nuse_crudo() -> list[dict]:
     with open(NUSE_PATH, encoding="utf-8") as f:
         return json.load(f)
 
 
-@st.cache_data
+@st.cache_data(ttl=300)
 def cargar_zonas_riesgo(anio: int, tipo_delito: str) -> dict:
-    """GeoJSON de las 20 localidades con riesgo real (#10) y tipologia real
-    (#27) para el anio y tipo de delito elegidos.
+    """GeoJSON de las 20 localidades con riesgo REAL (modelo predictivo,
+    #19) y tipologia REAL (#27), pedido a la API real GET /zonas-riesgo
+    (#20). Cacheado 5 minutos (ttl=300): no se re-pide en cada interaccion
+    del sidebar, pero tampoco queda pegado indefinidamente si la API se
+    reinicia con un modelo nuevo.
 
-    Cada feature agrega, ademas de la geometria: riesgo_alto (0/1),
-    conteo_siedco, cluster y nombre_perfil. Lanza ValueError si no hay dato
-    para la combinacion (anio, tipo_delito) pedida.
+    Lanza RuntimeError con un mensaje claro si la API no responde (caida,
+    timeout, error HTTP) -- streamlit_app.py lo atrapa y muestra con
+    st.error en vez de dejar que tumbe la app.
     """
-    geojson = _cargar_geometria()
-    riesgo_por_localidad = {
-        fila["cod_localidad"]: fila
-        for fila in _cargar_riesgo()
-        if fila["anio"] == anio and fila["tipo_delito"] == tipo_delito
-    }
-    if not riesgo_por_localidad:
-        raise ValueError(f"No hay datos de riesgo para anio={anio!r}, tipo_delito={tipo_delito!r}.")
-
-    tipologia_por_localidad = {fila["cod_localidad"]: fila for fila in _cargar_tipologia()}
-
-    for feature in geojson["features"]:
-        cod = feature["properties"]["cod_localidad"]
-        riesgo = riesgo_por_localidad[cod]
-        tipologia = tipologia_por_localidad[cod]
-        feature["properties"]["riesgo_alto"] = riesgo["riesgo_alto"]
-        feature["properties"]["conteo_siedco"] = riesgo["conteo_siedco"]
-        feature["properties"]["cluster"] = tipologia["cluster"]
-        feature["properties"]["nombre_perfil"] = tipologia["nombre_perfil"]
-
-    return geojson
+    try:
+        respuesta = requests.get(
+            f"{API_BASE_URL}/zonas-riesgo",
+            params={"anio": anio, "tipo": tipo_delito},
+            timeout=10,
+        )
+        respuesta.raise_for_status()
+        return respuesta.json()
+    except requests.RequestException as exc:
+        raise RuntimeError(
+            f"No se pudo conectar a la API en {API_BASE_URL}/zonas-riesgo "
+            f"(anio={anio}, tipo={tipo_delito}). ¿Está corriendo "
+            f"`uvicorn api.main:app`? Detalle: {exc}"
+        ) from exc
 
 
 @st.cache_data

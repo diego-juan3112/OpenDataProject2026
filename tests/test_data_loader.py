@@ -1,67 +1,78 @@
-"""Tests para data_loader (Issue #33): cargar_zonas_riesgo y
-cargar_densidad_nuse.
+"""Tests para data_loader (Issue #34): cargar_zonas_riesgo ahora llama a la
+API real via requests, en vez de leer fixtures locales (retirados en esta
+issue). cargar_densidad_nuse sigue local (NUSE no esta en el contrato de la
+API) -- sus tests, de la Issue #33, no cambian.
 
-A diferencia de la mayoria de tests del repo (que usan datos sinteticos),
-estos leen los fixtures reales commiteados en app/data/ (generados por
-app/data/generar_datasets_mapa.py, Issue #33) -- son seguros en CI porque,
-a diferencia de data/, SI estan versionados en git.
+Se mockea requests.get (frontera de red) -- unica excepcion al patron de
+"datos reales o sinteticos, nunca mocks" de este repo: una unit test no
+debe depender de que la API este corriendo. La prueba end-to-end real (API
++ dashboard corriendo juntos) se hace aparte, ver la Tarea 3 de este plan.
 """
 from __future__ import annotations
 
 import sys
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 import pytest
+import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "app"))
 
-from data_loader import cargar_zonas_riesgo, cargar_densidad_nuse
+from data_loader import API_BASE_URL, cargar_densidad_nuse, cargar_zonas_riesgo
 
-
-def test_cargar_zonas_riesgo_devuelve_20_localidades_con_riesgo_y_tipologia():
-    geojson = cargar_zonas_riesgo(2025, "HP")
-
-    assert geojson["type"] == "FeatureCollection"
-    assert len(geojson["features"]) == 20
-    for feature in geojson["features"]:
-        props = feature["properties"]
-        assert props["riesgo_alto"] in (0, 1)
-        assert isinstance(props["conteo_siedco"], int)
-        assert props["nombre_perfil"] in {
-            "Perfil de alto impacto generalizado",
-            "Perfil hurto de bienes / ingreso alto",
-            "Perfil de bajo incidente relativo",
+GEOJSON_EJEMPLO = {
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "cod_localidad": "01",
+                "localidad_nombre": "USAQUEN",
+                "nivel_riesgo": "medio",
+                "probabilidad_riesgo": 0.4354,
+                "riesgo_predicho": 0,
+                "cluster": 0,
+                "nombre_perfil": "Perfil de bajo incidente relativo",
+                "anio": 2025,
+                "tipo_delito": "HP",
+            },
+            "geometry": {"type": "Polygon", "coordinates": []},
         }
+    ],
+}
 
 
-def test_cargar_zonas_riesgo_valores_reales_2025_hp():
-    geojson = cargar_zonas_riesgo(2025, "HP")
-    riesgo_por_localidad = {
-        f["properties"]["cod_localidad"]: f["properties"]["riesgo_alto"]
-        for f in geojson["features"]
-    }
+def test_cargar_zonas_riesgo_llama_a_la_api_con_los_parametros_correctos():
+    cargar_zonas_riesgo.clear()
+    with patch("data_loader.requests.get") as mock_get:
+        mock_get.return_value = Mock(json=lambda: GEOJSON_EJEMPLO)
+        mock_get.return_value.raise_for_status = lambda: None
 
-    # Kennedy (08), Engativa (10), Suba (11): las 3 unicas localidades en
-    # riesgo alto para 2025/HP en el dato real (verificado corriendo el
-    # generador contra dataset_analitico.parquet antes de escribir este test).
-    assert riesgo_por_localidad["08"] == 1
-    assert riesgo_por_localidad["10"] == 1
-    assert riesgo_por_localidad["11"] == 1
-    assert riesgo_por_localidad["01"] == 0
-    assert sum(riesgo_por_localidad.values()) == 3
+        resultado = cargar_zonas_riesgo(2025, "HP")
 
-
-def test_cargar_zonas_riesgo_corrige_mojibake_antonio_narino():
-    geojson = cargar_zonas_riesgo(2025, "HP")
-    nombres = {f["properties"]["cod_localidad"]: f["properties"]["localidad_nombre"]
-               for f in geojson["features"]}
-
-    assert nombres["15"] == "ANTONIO NARIÑO"
+    mock_get.assert_called_once_with(
+        f"{API_BASE_URL}/zonas-riesgo",
+        params={"anio": 2025, "tipo": "HP"},
+        timeout=10,
+    )
+    assert resultado == GEOJSON_EJEMPLO
 
 
-def test_cargar_zonas_riesgo_combo_inexistente_lanza_value_error():
-    with pytest.raises(ValueError):
-        cargar_zonas_riesgo(2030, "HP")
+def test_cargar_zonas_riesgo_api_caida_lanza_runtime_error_claro():
+    cargar_zonas_riesgo.clear()
+    with patch("data_loader.requests.get", side_effect=requests.ConnectionError("boom")):
+        with pytest.raises(RuntimeError, match=API_BASE_URL):
+            cargar_zonas_riesgo(2024, "H")
+
+
+def test_cargar_zonas_riesgo_error_http_lanza_runtime_error():
+    cargar_zonas_riesgo.clear()
+    mock_response = Mock()
+    mock_response.raise_for_status.side_effect = requests.HTTPError("422 tipo invalido")
+    with patch("data_loader.requests.get", return_value=mock_response):
+        with pytest.raises(RuntimeError):
+            cargar_zonas_riesgo(2030, "ZZ")
 
 
 def test_cargar_densidad_nuse_devuelve_20_localidades():

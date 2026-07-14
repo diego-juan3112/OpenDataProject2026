@@ -676,9 +676,9 @@ etiqueta de perfil).
 mock. **Sin datos mock en la demo final.**
 
 **Criterios de aceptación:**
-- [ ] El mapa de riesgo y la tipología se alimentan del endpoint real.
-- [ ] GeoJSON cacheado (`@st.cache_data`), no re-pedido por cada interacción.
-- [ ] Prueba end-to-end: API → dashboard lo refleja. Sin mocks.
+- [x] El mapa de riesgo y la tipología se alimentan del endpoint real.
+- [x] GeoJSON cacheado (`@st.cache_data`), no re-pedido por cada interacción.
+- [x] Prueba end-to-end: API → dashboard lo refleja. Sin mocks.
 
 ---
 
