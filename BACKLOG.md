@@ -688,10 +688,12 @@ mock. **Sin datos mock en la demo final.**
 **Depende de:** #27, #28, #31 · **Bloquea a:** ninguno
 
 **Criterios de aceptación:**
-- [ ] Sección de clustering con método, validación interna y tipología accionable.
-- [ ] **Discusión ética** con los hallazgos de la auditoría de sesgo (#31).
-- [ ] Métricas del clustering en la sección compartida + comentario cruzado de Int. 2 (#23).
-- [ ] Trazabilidad a "Innovación", "Impacto y escalabilidad" y requisito ético.
+- [x] Sección de clustering con método, validación interna y tipología accionable.
+- [x] **Discusión ética** con los hallazgos de la auditoría de sesgo (#31).
+- [x] Métricas del clustering en la sección compartida + comentario cruzado de Int. 2 (#23).
+- [x] Trazabilidad a "Innovación", "Impacto y escalabilidad" y requisito ético.
+
+Texto completo: `docs/informe_clustering.md`.
 
 ---
 
