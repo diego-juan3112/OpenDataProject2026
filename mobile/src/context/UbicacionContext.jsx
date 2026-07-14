@@ -47,9 +47,18 @@ export function UbicacionProvider({ children }) {
     dispatch({ type: 'ACTIVAR_MODO_DEMO', payload: COORDENADA_DEMO });
   }, [detenerSuscripcion]);
 
-  const desactivarModoDemo = useCallback(() => {
+  const desactivarModoDemo = useCallback(async () => {
     dispatch({ type: 'DESACTIVAR_MODO_DEMO' });
-  }, []);
+    // Si el permiso ya estaba concedido, retoma el GPS real en vez de dejar
+    // al usuario sin posición hasta reabrir la app.
+    if (estado.permiso === 'concedido') {
+      const suscripcion = await suscribirPosicion(
+        (posicion) => dispatch({ type: 'POSICION_ACTUALIZADA', payload: posicion }),
+        (mensaje) => dispatch({ type: 'ERROR_GPS', payload: mensaje }),
+      );
+      suscripcionRef.current = suscripcion;
+    }
+  }, [estado.permiso]);
 
   // Cancela la suscripción de GPS al desmontar el provider (cierre de la app).
   useEffect(() => detenerSuscripcion, [detenerSuscripcion]);

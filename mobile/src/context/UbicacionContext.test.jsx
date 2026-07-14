@@ -115,6 +115,36 @@ test('desactivarModoDemo limpia la posicion', async () => {
   expect(valorActual.posicion).toBeNull();
 });
 
+test('desactivarModoDemo retoma el GPS real si el permiso ya estaba concedido', async () => {
+  ubicacionService.pedirPermiso.mockResolvedValue('concedido');
+  const removeReal = jest.fn();
+  const posicionReal = { lat: 4.65, lon: -74.08, precision: 10 };
+  ubicacionService.suscribirPosicion.mockImplementation((onUpdate) => {
+    onUpdate(posicionReal);
+    return Promise.resolve({ remove: removeReal });
+  });
+
+  montar();
+  await act(async () => {
+    await valorActual.aceptarConsentimiento();
+  });
+  expect(valorActual.posicion).toEqual(posicionReal);
+
+  act(() => {
+    valorActual.activarModoDemo();
+  });
+  expect(valorActual.modoDemo).toBe(true);
+  expect(removeReal).toHaveBeenCalledTimes(1);
+
+  await act(async () => {
+    await valorActual.desactivarModoDemo();
+  });
+
+  expect(valorActual.modoDemo).toBe(false);
+  expect(ubicacionService.suscribirPosicion).toHaveBeenCalledTimes(2);
+  expect(valorActual.posicion).toEqual(posicionReal);
+});
+
 test('useUbicacion fuera del provider lanza un error claro', () => {
   function ConsumidorSuelto() {
     useUbicacion();
