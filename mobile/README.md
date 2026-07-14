@@ -67,3 +67,46 @@ npm install -g eas-cli
 eas login
 eas build -p android --profile preview
 ```
+
+## Privacidad y ubicación (Issue #39)
+
+La app pide el permiso de ubicación **solo desde la tab Perfil**, después de
+mostrar un aviso de privacidad explícito (Ley 1581 de 2012) — no hay ningún
+permiso pedido al abrir la app. El consentimiento y la posición viven solo en
+memoria (`UbicacionContext`, sin `AsyncStorage`): se resetean al cerrar la
+app.
+
+Si el permiso se deniega (o el dispositivo no tiene GPS disponible), la tab
+Perfil ofrece un switch de **"modo demo"** que fija una coordenada simulada de
+Bogotá — sin ruta ni animación (eso llega en la Issue #41). El chip de
+`MapaScreen` muestra la coordenada cruda (real o demo); resolverla a
+localidad/nivel de riesgo real es la Issue #40.
+
+### Tests
+
+Primer test runner de `mobile/` (`jest` + `jest-expo`), cubre el reducer
+puro de ubicación y el servicio sobre `expo-location` (mockeado) — sin tests
+de renderizado de pantallas ni del diálogo nativo de permisos, que se
+verifican a mano:
+
+```bash
+cd mobile
+npm test
+```
+
+### Checklist de verificación manual en dispositivo físico
+
+1. Abrir la tab **Perfil** sin haber concedido el permiso antes: debe verse
+   el aviso de privacidad con los dos botones.
+2. Tocar **"Aceptar y activar ubicación"**: el SO debe pedir el permiso de
+   ubicación; al concederlo, Perfil debe mostrar "Ubicación activa" y, tras
+   unos segundos, coordenadas reales.
+3. Ir a la tab **Mapa**: el chip debe mostrar las mismas coordenadas
+   (`· GPS activo`) y actualizarse al moverte.
+4. Denegar el permiso (probar en una segunda instalación o revocándolo desde
+   Ajustes del sistema y reabriendo la app): Perfil debe mostrar el mensaje
+   de error claro, sin que la app se rompa.
+5. Activar el switch **"Modo demo"**: el chip de Mapa debe cambiar a la
+   coordenada fija con `· Modo demo`, y desactivarlo debe volver a
+   "Ubicación desactivada" (si no hay permiso real) o a la posición GPS (si
+   sí lo hay).
