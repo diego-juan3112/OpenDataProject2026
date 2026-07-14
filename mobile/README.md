@@ -1,15 +1,22 @@
 # mobile/ — App Alerta Ciudadana (Expo / React Native)
 
-**Integrante 4** · Issues #37–#44, #49–#51 · Expo SDK (JavaScript, template `blank`)
+**Integrante 4** · Issues #37–#44, #49–#51 · **Expo SDK 54** (JavaScript, template `blank`)
 
 App móvil que consume la API de Alerta Ciudadana: mapa de riesgo por localidad,
-comparativa de rutas (Ruta Más Segura), alerta local al entrar a zona de riesgo
-alto y modo demo. Cliente delgado del contrato `/zonas-riesgo` y `/api/v1/ruta-segura`.
+alerta local al entrar a zona de riesgo alto y modo demo. Cliente delgado del
+contrato `/zonas-riesgo`.
+
+> **El proyecto va en Expo SDK 54** porque es la versión de **Expo Go** disponible
+> en la Play Store del equipo. No lo subas a un SDK mayor sin que todos tengan un
+> Expo Go compatible: un desajuste rompe el bundling (error de codegen). Si tras un
+> `git pull` cambian las versiones, **borra `node_modules` y reinstala**
+> (`Remove-Item -Recurse -Force node_modules; npm install`), y arranca con caché
+> limpia: `npx expo start -c`.
 
 ## Prerrequisitos
 - Node.js >= 18 (verificado con v24)
-- Expo Go instalado en el teléfono Android (Play Store)
-- La API backend corriendo (ver `README.md` de la raíz)
+- **Expo Go 54** instalado en el teléfono Android (Play Store)
+- La API backend corriendo — opcional: por defecto el mapa usa datos mock (ver `README.md` de la raíz)
 
 ## Cómo correr en desarrollo
 

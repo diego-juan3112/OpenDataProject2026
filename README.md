@@ -72,7 +72,7 @@ OpenDataProject2026/
 ├── DEFINITION_OF_DONE.md     # DoD a nivel proyecto
 ├── requirements.txt          # Dependencias Python (environment.yml para Conda)
 ├── docs/                     # Planteamiento, metodología, fuentes, diccionarios, validación
-├── data/                     # 01_raw / 02_intermediate / 03_primary / 04_model_output (gitignored)
+├── data/                     # 01_raw / 02_intermediate (gitignored) · 03_primary (versionado)
 ├── src/                      # Integrante 1 — pipeline: config, ingestas, limpieza, cruce
 ├── pipelines/                # Integrante 1 — pipeline_ml.py (orquestador extremo a extremo)
 ├── notebooks/                # EDA y experimentación
@@ -89,71 +89,95 @@ OpenDataProject2026/
 
 ---
 
-## Cómo correr el proyecto
+## Cómo correr el proyecto (empezar desde cero)
 
-> Los comandos se completan a medida que cada pista entrega su parte. El orden de
-> arranque para una demo completa es: **pipeline → modelos → API → (dashboard | app)**.
+> **El repo ya incluye los datos procesados y los modelos entrenados** (~3 MB,
+> versionados). No necesitas descargar las fuentes crudas ni entrenar nada:
+> clona, instala dependencias y arranca. Ver [Gestión de datos](#gestión-de-datos).
 
-### 0) Entorno Python
+### Requisitos
+
+| Herramienta | Versión | Para qué |
+|---|---|---|
+| **Python** | 3.11+ (probado en 3.13) | Pipeline, API, dashboard |
+| **Node.js** | >= 18 (probado en v24) | App móvil |
+| **Expo Go** | **54** (Play Store, Android) | Correr la app en tu teléfono |
+
+### 0) Entorno Python (una vez, desde la raíz del repo)
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
+source .venv/bin/activate           # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 1) Pipeline de datos (Integrante 1)
+### 1) API ligera (Integrante 2)
 
-Genera `data/03_primary/dataset_analitico.parquet` y `data/03_primary/zonas_bogota.geojson`.
-
-```bash
-python pipelines/pipeline_ml.py
-```
-
-### 2) Entrenar modelos (Integrantes 2 y 3)
-
-Genera `models/predictivo/model.joblib` y `models/clustering/clusters.joblib`.
-
-```bash
-python models/predictivo/train.py
-python models/clustering/train.py
-```
-
-### 3) Levantar la API ligera (Integrante 2)
-
-Carga los modelos en memoria y expone el único endpoint del sistema.
+Carga los modelos (ya incluidos en el repo) y expone el endpoint del sistema.
 
 ```bash
 uvicorn api.main:app --host 0.0.0.0 --port 8000
-# Contrato:  GET http://localhost:8000/zonas-riesgo  → GeoJSON (riesgo + cluster por zona)
+# GET http://localhost:8000/zonas-riesgo   → GeoJSON (riesgo + cluster por zona)
+# Swagger interactivo: http://localhost:8000/docs
 ```
 
-> `--host 0.0.0.0` permite que el dispositivo móvil físico alcance la API por la
-> IP de LAN del portátil (misma Wi-Fi).
+> `--host 0.0.0.0` permite que el teléfono físico alcance la API por la **IP de
+> LAN** del portátil (misma Wi-Fi).
 
-### 4a) Dashboard (Integrante 3)
+### 2) Dashboard Streamlit (Integrante 3)
 
 ```bash
+pip install -r app/requirements.txt
 streamlit run app/streamlit_app.py
-# Dashboard en http://localhost:8501  (consume la API en el puerto 8000)
+# Dashboard en http://localhost:8501  (consume la API del puerto 8000)
 ```
 
-### 4b) App móvil en dispositivo físico real (Integrante 4)
+### 3) App móvil en un teléfono real (Integrante 4)
 
 ```bash
 cd mobile
 npm install
-npx expo start
+npx expo start                      # si el teléfono no ve el QR: npx expo start --tunnel
 ```
 
-1. Escanea el QR con **Expo Go** desde un teléfono **Android** en la misma Wi-Fi.
-2. Configura la URL de la API con la **IP de LAN** del portátil (p. ej.
-   `http://192.168.x.x:8000`) o un **túnel** (`npx expo start --tunnel` / ngrok).
-3. Concede el permiso de ubicación (aviso de privacidad opt-in) y activa el
-   **modo demo** para disparar la alerta con una ubicación simulada en la
-   presentación.
+1. Escanea el QR con **Expo Go 54** desde un **Android** en la misma Wi-Fi.
+2. Apunta la app a la API: edita `mobile/src/config.js` → `API_BASE_URL` con la
+   **IP de LAN** del portátil (p. ej. `http://192.168.x.x:8000`; obtén la IP con
+   `ipconfig`). Por defecto el mapa usa datos de prueba (mock) y no necesita la API.
+3. Concede el permiso de ubicación (aviso de privacidad opt-in) y usa el **modo
+   demo** para simular la ubicación en la presentación.
 
 Para un APK instalable: `eas build -p android --profile preview`.
+
+### (Opcional) Regenerar datos y modelos desde cero
+
+Solo si quieres reconstruirlos (descarga las fuentes abiertas, ~112 MB de NUSE):
+
+```bash
+python pipelines/pipeline_ml.py     # regenera el dataset analítico + GeoJSON de zonas
+python models/predictivo/train.py   # re-entrena el modelo predictivo
+# Los scripts de cada modelo viven en models/ (ver models/predictivo/ y models/clustering/).
+```
+
+---
+
+## Gestión de datos
+
+El proyecto separa lo **pesado/crudo** (no se versiona) de los **artefactos
+derivados pequeños** (sí se versionan), para que cualquiera pueda clonar y correr
+sin descargar fuentes ni re-entrenar:
+
+| Qué | Dónde | ¿En git? |
+|---|---|---|
+| Fuentes crudas y limpias (incluye NUSE ~112 MB) | `data/01_raw`, `data/02_intermediate` | ❌ ignorado (se descarga/regenera) |
+| **Dataset analítico + geometría de zonas** | `data/03_primary/{dataset_analitico.parquet, zonas_bogota.geojson}` | ✅ versionado (~2.5 MB) |
+| **Modelos entrenados** | `models/predictivo/model.joblib`, `models/clustering/*.joblib`/`*.parquet` | ✅ versionado (<1 MB) |
+| Fixtures del dashboard | `app/data/*` | ✅ versionado |
+
+Las excepciones que "des-ignoran" esos archivos están al final de `.gitignore`.
+Al clonar el repo ya vienen incluidos → la API, el dashboard y el mock del móvil
+funcionan de inmediato. Solo hace falta regenerarlos si cambian las fuentes o el
+modelado (ver *(Opcional) Regenerar…* arriba).
 
 ---
 

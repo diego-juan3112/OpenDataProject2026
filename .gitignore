@@ -47,3 +47,16 @@ dist/
 .idea/
 .DS_Store
 Thumbs.db
+
+# --- Artefactos derivados pequeños que SÍ se versionan (onboarding) ---
+# Se suben al repo para que quien clone pueda correr API/dashboard/app sin
+# descargar las fuentes crudas (~112 MB) ni re-entrenar. Son ~3 MB en total y
+# se regeneran con el pipeline si hace falta. Lo pesado/crudo (01_raw,
+# 02_intermediate) sigue ignorado arriba.
+!data/03_primary/dataset_analitico.parquet
+!data/03_primary/zonas_bogota.geojson
+!models/predictivo/model.joblib
+!models/clustering/clusters.joblib
+!models/clustering/zona_cluster.parquet
+!models/clustering/features_zona.parquet
+!models/clustering/linea_base_zscore.parquet
