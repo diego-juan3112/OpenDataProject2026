@@ -1,4 +1,5 @@
 import { StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 import { COLORES } from '../config';
 import { useUbicacion } from '../context/UbicacionContext';
@@ -44,7 +45,10 @@ export default function PerfilScreen() {
 
       {permiso === 'concedido' && (
         <View style={styles.tarjeta}>
-          <Text style={styles.texto}>📍 Ubicación activa</Text>
+          <View style={styles.filaIcono}>
+            <Ionicons name="location-sharp" size={16} color={COLORES.textoPrinc} />
+            <Text style={styles.texto}>Ubicación activa</Text>
+          </View>
           {posicion ? (
             <Text style={styles.textoSecund}>
               {posicion.lat.toFixed(4)}, {posicion.lon.toFixed(4)}
@@ -117,4 +121,5 @@ const styles = StyleSheet.create({
   },
   textoBotonRechazar: { color: COLORES.textoSecund, fontSize: 13 },
   filaSwitch: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  filaIcono: { flexDirection: 'row', alignItems: 'center', gap: 8 },
 });

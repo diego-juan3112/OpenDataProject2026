@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import MapView, { Polygon } from 'react-native-maps';
 
 import { COLORES } from '../config';
@@ -100,18 +101,19 @@ export default function MapaScreen({ navigation }) {
         activeOpacity={posicion ? 1 : 0.7}
         onPress={() => !posicion && navigation?.navigate?.('Perfil')}
       >
+        <Ionicons name="location-sharp" size={14} color={COLORES.textoPrinc} />
         <Text style={styles.chipTexto}>
           {posicion
-            ? `📍 ${posicion.lat.toFixed(4)}, ${posicion.lon.toFixed(4)} · ${
+            ? `${posicion.lat.toFixed(4)}, ${posicion.lon.toFixed(4)} · ${
                 modoDemo ? 'Modo demo' : 'GPS activo'
               }`
-            : '📍 Ubicación desactivada · Actívala en Perfil'}
+            : 'Ubicación desactivada · Actívala en Perfil'}
         </Text>
       </TouchableOpacity>
 
       {/* FAB de reporte ciudadano (solo visual hasta #42) */}
       <TouchableOpacity style={styles.fab} activeOpacity={0.8}>
-        <Text style={styles.fabTexto}>📢</Text>
+        <Ionicons name="megaphone" size={22} color={COLORES.textoPrinc} />
       </TouchableOpacity>
     </View>
   );
@@ -140,6 +142,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 16,
     bottom: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     backgroundColor: COLORES.tarjeta,
     borderColor: COLORES.borde,
     borderWidth: 1,
@@ -164,5 +169,4 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
   },
-  fabTexto: { fontSize: 22 },
 });
