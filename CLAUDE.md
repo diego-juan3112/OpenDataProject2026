@@ -376,26 +376,68 @@ un comentario corto de validación. Ver `BACKLOG.md` (issues) y `CRONOGRAMA.md`
   interpretabilidad, no por silhouette máximo) y serializa
   `clusters.joblib` + `zona_cluster.parquet`. Ver
   `docs/data-dictionaries/` para la tipología de perfiles.
+- **Completo:** `models/predictivo/` — Issues #18–#19 (Integrante 2):
+  `train.py` entrena y serializa `model.joblib` + `metrics.json` +
+  `comparacion_modelos.csv`; `features.py`, `baselines.py`,
+  `error_analysis.py` y `predict.py` (usado por la API) son las piezas
+  reutilizables. Decisiones, features, validación espacio-temporal y
+  auditoría de robustez/sesgo documentadas en `DECISIONES.md`,
+  `FEATURES.md`, `VALIDACION.md`, `ROBUSTEZ.md`, `MODEL_CARD.md`,
+  `qa_cruzada.md` dentro de la misma carpeta.
+- **Completo:** `api/` — Issue #20 (Integrante 2): FastAPI de un solo
+  endpoint (`api/main.py`) + estado compartido (`api/state.py`, `AppState`
+  singleton). Carga `model.joblib`, `clusters.joblib`,
+  `zona_cluster.parquet`, `dataset_analitico.parquet` y
+  `zonas_bogota.geojson` **una sola vez** en `lifespan` y precomputa todas
+  las predicciones al arranque (no por request). Acepta `tipo` como código
+  SIEDCO (`HP`) o slug (`hurto_personas`) vía `resolver_tipo`. Ver
+  `api/README.md` para el contrato exacto de campos.
+- **Completo (capa de riesgo/tipología) / fixture local (NUSE y línea
+  base):** `app/` — Issues #33/#34/#36 (Integrante 3): `streamlit_app.py`
+  + `data_loader.py` + `reporte_ciudadano.py` + `localidad_lookup.py`. La
+  capa de riesgo y tipología ya **no** usa fixtures: `cargar_zonas_riesgo`
+  llama a la API real (`GET /zonas-riesgo`, cacheado 5 min, URL
+  configurable con la env var `ALERTA_API_URL`, default
+  `http://localhost:8000`) y falla con un `st.error` legible si la API no
+  responde. La capa NUSE y la línea base z-score siguen leyendo fixtures
+  **commiteados** en `app/data/*.json`/`*.geojson` (NUSE no forma parte del
+  contrato de la API — ver §4) generados con
+  `app/data/generar_datasets_mapa.py`. El reporte ciudadano (#36) vive solo
+  en `st.session_state`.
+- **Parcial:** `mobile/` — solo existe `src/geofencing/` (Issue #21,
+  entregado por Integrante 2 para que Integrante 4 lo enchufe a Expo):
+  módulo JS plano (`riesgoDeCoordenada.js`, `zonasCache.js`, `index.js`,
+  sin dependencias de Expo) que resuelve localidad + nivel de riesgo a
+  partir de una coordenada, con fallback offline. **No hay todavía
+  `package.json`, `App.js` ni scaffold de Expo** — el cliente móvil real
+  (GPS + `expo-notifications` + modo demo, issues #39–#40) no existe aún en
+  disco. `tests/test_geofencing.py` es la contraparte Python (Shapely) que
+  verifica la misma lógica de point-in-polygon.
 - **Scaffold / placeholder:** `src/model_training.py`,
-  `src/model_evaluation.py` (Integrante 2, predictivo aún no entrenado), la
+  `src/model_evaluation.py` (superados por `models/predictivo/` — verifica
+  si algo los sigue importando antes de asumir que están en uso), la
   mayoría de `notebooks/*` (excepto el EDA #11 y
   `ejemplo_dataset_analitico.ipynb`), y la mayoría de `docs/*.md` fuera de
   `fuentes_datos.md`, `data_dictionary.md` y `data-dictionaries/`.
   `src/feature_engineering.py` ya no es solo placeholder: además de
   `add_target_riesgo_alto` (variable objetivo del predictivo), expone
   `construir_features_zona` y `calcular_linea_base` que usa el clustering.
-- **No existen aún en disco:** `api/`, `app/`, `mobile/`,
-  `models/predictivo/`. Los comandos de `README.md` para esas piezas
-  (`uvicorn`, `streamlit run`, `expo start`) documentan el plan de
-  arquitectura, no algo ejecutable hoy — verifica con `ls`/`Glob` antes de
-  asumir que un archivo de esas carpetas existe.
-- `tests/` ya tiene casos reales (`test_feature_engineering.py`,
-  `test_clustering.py`, `test_validacion_clustering.py`), además de `.github/workflows/ci.yml` corriendo
-  `pytest tests/ -v`. Todos usan DataFrames/matrices **sintéticos** en vez
-  del parquet real, porque `data/` y `models/*/*.parquet` no están
-  versionados y no existen en CI — sigue ese patrón para pruebas nuevas.
+- `tests/` tiene 10 archivos (~830 líneas): además de
+  `test_feature_engineering.py`, `test_clustering.py`,
+  `test_validacion_clustering.py`, ahora cubre `test_predictivo.py`,
+  `test_flag_zscore.py`, `test_api_zonas_riesgo.py`,
+  `test_data_loader.py`, `test_reporte_ciudadano.py`,
+  `test_localidad_lookup.py` y `test_geofencing.py`. Todos siguen usando
+  DataFrames/matrices/mocks **sintéticos** en vez de artefactos reales en
+  disco (`data/`, `models/*/*.parquet|joblib` no están versionados y no
+  existen en CI) — sigue ese patrón para pruebas nuevas. `.github/workflows/ci.yml`
+  instala `requirements.txt` **y** `app/requirements.txt` antes de correr
+  `pytest tests/ -v`.
+- `ESTRUCTURA.md` quedó **desactualizado** (fecha de corte 2026-07-02,
+  anterior a `api/`, `app/`, `mobile/` y `models/predictivo/`) — no confíes
+  en sus afirmaciones de "no existe en disco"; verifica con `Glob`/`ls`.
 - `CRONOGRAMA.md` se referencia desde README/BACKLOG pero no existe en el
-  repo (ver nota de seguimiento en `ESTRUCTURA.md` §5).
+  repo.
 
 ### Comandos
 
@@ -422,13 +464,27 @@ python models/clustering/train.py
 # Validar estabilidad interna del clustering (silhouette, ARI contra semillas aleatorias)
 python models/clustering/validate.py
 
+# Predictivo (Integrante 2) -> models/predictivo/{model.joblib,metrics.json,comparacion_modelos.csv}
+python models/predictivo/train.py
+
+# API ligera (Integrante 2) -> requiere que los 4 artefactos de arriba existan
+# (--host 0.0.0.0 para que el movil fisico la alcance por IP de LAN)
+uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+# Contrato: GET http://localhost:8000/zonas-riesgo?anio=2025&tipo=HP
+
+# Dashboard (Integrante 3) -> necesita la API corriendo (o ALERTA_API_URL apuntando a otra)
+.venv/Scripts/pip install -r app/requirements.txt
+streamlit run app/streamlit_app.py
+
 # Lo que corre CI (.github/workflows/ci.yml)
+python -m pip install -r requirements.txt -r app/requirements.txt
 python -m compileall src pipelines tests
 pytest tests/ -v
 
-# Un solo archivo o test (los tests usan datos sintéticos, no requieren data/)
+# Un solo archivo o test (los tests usan datos/mocks sinteticos, no requieren data/ ni artefactos reales)
 pytest tests/test_clustering.py -v
 pytest tests/test_clustering.py::test_nombrar_clusters_asigna_los_3_perfiles_esperados -v
+pytest tests/test_api_zonas_riesgo.py -v
 ```
 
 No hay linter/formatter configurado (no hay `ruff`, `flake8` ni `black` en
