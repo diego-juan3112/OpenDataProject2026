@@ -9,6 +9,7 @@ import {
 import MapView, { Polygon } from 'react-native-maps';
 
 import { COLORES } from '../config';
+import { useUbicacion } from '../context/UbicacionContext';
 import { colorPorNivel, fetchZonas, USAR_MOCK } from '../services/zonasService';
 
 // Región inicial: Bogotá.
@@ -19,8 +20,6 @@ const REGION_BOGOTA = {
   longitudeDelta: 0.15,
 };
 
-// Ubicación actual hardcodeada (el GPS real llega en #39).
-const ZONA_ACTUAL = { nombre: 'Chapinero', nivel: 'MEDIO' };
 
 // Extrae los anillos exteriores de un feature (Polygon o MultiPolygon).
 function anillosExteriores(feature) {
@@ -34,6 +33,7 @@ function anillosExteriores(feature) {
 export default function MapaScreen({ navigation }) {
   const [estado, setEstado] = useState('cargando'); // 'cargando' | 'error' | 'listo'
   const [zonas, setZonas] = useState([]);
+  const { posicion, modoDemo } = useUbicacion();
 
   useLayoutEffect(() => {
     navigation?.setOptions?.({
@@ -93,12 +93,21 @@ export default function MapaScreen({ navigation }) {
         )}
       </MapView>
 
-      {/* Chip de ubicación (hardcodeado hasta #39) */}
-      <View style={styles.chip}>
+      {/* Chip de posición: GPS real o modo demo (#39). Resolver la
+          coordenada a zona/nivel de riesgo real es la Issue #40. */}
+      <TouchableOpacity
+        style={styles.chip}
+        activeOpacity={posicion ? 1 : 0.7}
+        onPress={() => !posicion && navigation?.navigate?.('Perfil')}
+      >
         <Text style={styles.chipTexto}>
-          📍 {ZONA_ACTUAL.nombre} · Riesgo {ZONA_ACTUAL.nivel}
+          {posicion
+            ? `📍 ${posicion.lat.toFixed(4)}, ${posicion.lon.toFixed(4)} · ${
+                modoDemo ? 'Modo demo' : 'GPS activo'
+              }`
+            : '📍 Ubicación desactivada · Actívala en Perfil'}
         </Text>
-      </View>
+      </TouchableOpacity>
 
       {/* FAB de reporte ciudadano (solo visual hasta #42) */}
       <TouchableOpacity style={styles.fab} activeOpacity={0.8}>
